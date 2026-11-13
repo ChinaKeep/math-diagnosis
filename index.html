@@ -1,0 +1,2842 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="沪教版六至九年级数学讲评工具。选择知识点或用课堂原题，核对学生作答，投屏讲评并准备复测试卷。">
+<meta property="og:title" content="AI 错因诊断与讲评台">
+<meta property="og:description" content="从学生解题步骤找错因，复核后投屏讲评，再用同类题复测。">
+<meta name="theme-color" content="#f2f3fc">
+<title>AI 错因诊断与讲评台</title>
+<style>
+  :root{color-scheme:light;--ink:#1c2340;--muted:#545b74;--line:#e0e3f1;--accent:#4333b4;--soft:#ede9ff;--white:#fff;--wash:#f2f3fc;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:var(--wash)}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;line-height:1.5}
+  button,input{font:inherit}
+  button{cursor:pointer;color:inherit}
+  button:disabled{cursor:wait;opacity:.65}
+  :focus-visible{outline:3px solid #7358da;outline-offset:3px}
+  .wrap{max-width:1200px;width:calc(100% - 72px);margin-inline:auto}
+  .masthead{background:#fbfaff;border-bottom:1px solid var(--line)}
+  .masthead .wrap{min-height:65px;display:flex;align-items:center;gap:11px;font-size:15px;font-weight:750}
+  .mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--accent);color:white;font-size:20px}
+  .hero{padding:38px 0 28px}
+  .hero h1{font-size:clamp(28px,3.6vw,45px);line-height:1.14;letter-spacing:-.045em;margin:0 0 11px}
+  .hero p{margin:0;color:var(--muted);font-size:15px}
+  .workbench{display:grid;grid-template-columns:minmax(295px,325px) minmax(0,1fr);gap:22px;align-items:start;padding-bottom:44px}
+  .settings,.preview{background:var(--white);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 22px #29236608;min-width:0}
+  .settings{padding:23px}
+  h2{margin:0;font-size:19px;letter-spacing:-.02em}
+  fieldset{padding:0;margin:0;border:0;min-width:0}
+  .setting{margin-top:24px}
+  legend,.field-label{font-weight:700;font-size:14px}
+  legend{padding:0;margin-bottom:10px}
+  .book-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .grade-select{display:block;width:100%;height:42px;margin-top:9px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink);font:inherit;font-size:14px}
+  .topic-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .text-button{padding:3px 4px;border:0;background:none;color:var(--accent);font-weight:650;font-size:13px;min-height:36px}
+  .topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .topic{position:relative;display:flex;align-items:center;gap:7px;min-height:43px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;color:#353c59;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
+  .topic:has(:checked){border-color:#c6b9ff;background:#f4f0ff;color:#3e28a3;font-weight:650}
+  .topic input{accent-color:var(--accent);width:15px;height:15px;flex:none;margin:0}
+  .difficulty{display:flex;gap:3px;padding:3px;background:#f2f1f8;border-radius:9px}
+  .level{flex:1;position:relative;text-align:center;cursor:pointer}
+  .level input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+  .level span{display:block;padding:8px 4px;min-height:38px;border:1px solid transparent;border-radius:7px;color:var(--muted);font-size:13px}
+  .level :checked+span{color:var(--accent);font-weight:750;background:white;border-color:#ded9f3;box-shadow:0 1px 2px #28204413}
+  .level :focus-visible+span{outline:2px solid #7358da}
+  .count-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px}
+  .count-range{color:var(--muted);font-size:13px}
+  .count{display:grid;grid-template-columns:42px 49px 42px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .count button,.count input{height:40px;background:white;border:0;text-align:center;padding:0}
+  .count button{color:var(--accent);font-size:20px;font-weight:650}
+  .count button:hover{background:var(--soft)}
+  .count input{width:100%;min-width:0;border-inline:1px solid var(--line);font-weight:750;appearance:textfield}
+  .count input::-webkit-inner-spin-button,.count input::-webkit-outer-spin-button{appearance:none;margin:0}
+  .button{min-height:42px;display:inline-flex;justify-content:center;align-items:center;gap:7px;padding:8px 13px;border-radius:9px;border:1px solid #d9d7ed;background:white;font-size:13px;font-weight:700;white-space:nowrap}
+  .button:hover{background:#f3efff}
+  .primary{color:white;background:var(--accent);border-color:var(--accent)}
+  .primary:hover{background:#382899}
+  .generate{width:100%;margin-top:23px;font-size:15px;min-height:46px}
+  .form-status{font-size:12px;color:var(--muted);min-height:18px;margin:8px 0 0}
+  .form-status[data-error="true"],.export-status[data-error="true"]{color:#a02430}
+  .preview{overflow:hidden}
+  .preview-header{padding:19px 20px 0}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .exports{display:flex;gap:8px;flex-wrap:wrap}
+  .export-status{margin:0;color:var(--muted);font-size:12px}
+  .export-status:not(:empty){margin-top:7px}
+  .tabs{display:flex;align-items:stretch;gap:25px;margin-top:10px}
+  .tab{padding:9px 1px;min-height:42px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:14px;font-weight:650}
+  .tab[aria-selected="true"]{color:var(--accent);border-color:var(--accent)}
+  .preview-surface{padding:21px 22px 25px;border-top:1px solid var(--line);background:#f7f7fc}
+  .paper{max-width:700px;margin-inline:auto;background:white;border:1px solid #e4e5ef;border-radius:6px;padding:27px clamp(19px,4vw,44px) 35px;box-shadow:0 4px 16px #231b5010;color:#222738}
+  .paper h3{margin:0;text-align:center;font-size:clamp(21px,2.6vw,28px);letter-spacing:.02em}
+  .paper-meta{margin:6px 0 16px;text-align:center;color:#565c70;font-size:13px}
+  .identity{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;border-bottom:1px solid #d7dbe9;padding-bottom:12px;font-size:13px}
+  .question-list{padding-left:24px;margin:0}
+  .question-list li{padding-left:4px;margin-top:15px}
+  .question-list li::marker{font-weight:750}
+  .question-text{margin:0;overflow-wrap:anywhere}
+  .writing-line{height:18px;border-bottom:1px solid #e1e3eb}
+  .solution{margin:7px 0 0;overflow-wrap:anywhere}
+  .solution strong{color:#413194}
+  .solution-details{margin:4px 0 0;color:#454a60;overflow-wrap:anywhere}
+  @media(max-width:910px){
+    .wrap{width:calc(100% - 42px)}
+    .workbench{grid-template-columns:minmax(260px,290px) minmax(0,1fr);gap:14px}
+    .settings,.preview-header{padding-inline:16px}
+    .preview-surface{padding-inline:13px}
+  }
+  @media(max-width:690px){
+    .wrap{width:calc(100% - 28px)}
+    .masthead .wrap{min-height:56px}
+    .hero{padding:26px 0 18px}
+    .hero p{font-size:14px}
+    .workbench{grid-template-columns:minmax(0,1fr);gap:14px}
+    .setting{margin-top:17px}
+    .topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .generate{margin-top:17px}
+    .preview-surface{padding:10px 7px 15px}
+    .paper{padding:21px 14px 24px}
+  }
+  @page{size:A4;margin:15mm 17mm}
+  @media print{
+    :root,body,.preview,.preview-surface,.paper{background:white;color:#000}
+    .masthead,.hero,.settings,.preview-header{display:none!important}
+    .wrap,.workbench,.preview,.preview-surface,.paper{width:auto;max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;display:block;overflow:visible}
+    .paper h3{font-size:19pt}
+    .paper-meta,.identity{font-size:10pt;color:#222}
+    .question-list{font-size:11pt;padding-left:20pt}
+    .question-list li{margin-top:10pt;break-inside:avoid}
+    .writing-line{height:14pt;border-color:#ccc}
+    .solution strong,.solution-details{color:#000}
+  }
+    [hidden]{display:none!important}
+  .tool-nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;padding-block:6px}
+  .tool-nav .button{border-color:transparent;background:transparent}
+  .tool-nav .button[aria-current="page"]{background:var(--soft);color:var(--accent)}
+  /* 背景只铺在诊断页，打印与组卷页面继续使用各自的底色。 */
+  body:has(#diagnosis-view:not([hidden])){
+    background:
+      radial-gradient(ellipse at 91% 340px,#dcebf9 0%,transparent 46%),
+      radial-gradient(ellipse at 6% 405px,#e8ddff 0%,transparent 43%),
+      #f5f4fb;
+    min-height:100vh
+  }
+  .diagnosis-hero{
+    position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;
+    min-height:238px;margin:28px 0 22px;padding:32px clamp(24px,4.5vw,55px);border-radius:24px;
+    background:
+      radial-gradient(ellipse at 95% -18%,#234a80 0%,transparent 46%),
+      radial-gradient(ellipse at 68% 105%,#4e378d 0%,transparent 53%),
+      linear-gradient(110deg,#121528 25%,#252052 78%,#15243f);
+    border:1px solid #535088;box-shadow:0 16px 37px #29205224;color:white
+  }
+  .diagnosis-hero::before,.diagnosis-hero::after{content:"";position:absolute;pointer-events:none}
+  .diagnosis-hero::before{
+    inset:0;
+    background-image:radial-gradient(circle,#c9c7fb56 1px,transparent 1.5px);
+    background-size:19px 19px;
+    mask-image:linear-gradient(90deg,transparent 37%,#000 90%)
+  }
+  .diagnosis-hero::after{
+    inset:0;background:linear-gradient(90deg,#121528 0%,#121528d9 29%,transparent 66%);
+  }
+  .diagnosis-hero-copy{position:relative;z-index:2}
+  .diagnosis-hero h1{margin:10px 0 12px;font-size:clamp(26px,3.7vw,45px);letter-spacing:-.04em}
+  .diagnosis-hero .diagnosis-course{color:#bdbaf2;font-size:13px;font-weight:680;letter-spacing:.055em}
+  .diagnosis-hero .diagnosis-hero-description{color:#e2e0ff;font-size:15px}
+  .diagnosis-hero-art{position:absolute;inset:0 0 0 auto;width:57%;pointer-events:none}
+  .diagnosis-hero-art::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at 70% 52%,#a281ff69 0%,#6b9ee629 29%,transparent 66%);
+    animation:diagnosis-glow 5s ease-out both
+  }
+  @keyframes diagnosis-glow{
+    from{opacity:.35}
+    to{opacity:1}
+  }
+  @media(prefers-reduced-motion:reduce){.diagnosis-hero-art::before{animation:none}}
+  .diagnosis-hero-art canvas{position:relative}
+  .diagnosis-hero-art canvas{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+  .diagnosis-grid,.projection-grid{display:grid;grid-template-columns:minmax(0,295px) minmax(0,1fr);gap:18px;align-items:start}
+  .projection-grid{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr)}
+  .diagnosis-grid{padding-bottom:36px}
+  .diagnosis-main{display:grid;gap:16px;min-width:0}
+  .diagnosis-grid .diagnosis-card{box-shadow:0 8px 25px #4030740b}
+  .diagnosis-context{background:#fbfaff}
+  .diagnosis-context .field-label{margin-top:14px}
+  .diagnosis-question-controls{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:8px}
+  .diagnosis-question-controls select{min-width:0}
+  .projection-grid:has(#projection-graph-card[hidden]){grid-template-columns:minmax(0,1fr)}
+  #diagnosis-entry-title,.diagnosis-review h2{margin:0}
+  #diagnosis-example{padding-inline:9px}
+  .diagnosis-card h2{margin-bottom:13px}
+  .diagnosis-card p{overflow-wrap:anywhere}
+  .diagnosis-card select{margin-top:5px}
+  .diagnosis-card label{display:block}
+  .diagnosis-card textarea,.diagnosis-field{
+    display:block;width:100%;min-width:0;margin:6px 0 10px;padding:9px 11px;border:1px solid #cfd2e5;
+    border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:14px
+  }
+  .diagnosis-card textarea{resize:vertical;min-height:64px}
+  #diagnosis-input{
+    min-height:104px;margin:0;padding:13px 15px;border:0;border-radius:13px 13px 0 0;
+    background:transparent;color:#1b2040;font-size:15px
+  }
+  #diagnosis-input:focus-visible{outline:none}
+  .diagnosis-composer{
+    overflow:hidden;margin-top:9px;border:1px solid #b8a9ee;border-radius:15px;
+    background:linear-gradient(145deg,#f8f5ff,#fff 53%,#f5faff);box-shadow:0 3px 14px #5442a10e
+  }
+  .diagnosis-composer:focus-within{border-color:#7358da;box-shadow:0 0 0 3px #ebe4ff}
+  .diagnosis-composer-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;
+    min-height:59px;padding:7px 10px 8px 14px;border-top:1px solid #eae4fa;background:#f8f5ff
+  }
+  .diagnosis-composer-bar .button{
+    margin-left:auto;padding-inline:15px;background:linear-gradient(120deg,#593fc5,#3d50b8);
+    box-shadow:0 3px 9px #5d48ba33
+  }
+  .diagnosis-composer-bar .button:hover{background:#4026a3}
+  .diagnosis-spark{color:#ebe0ff;font-size:17px;line-height:1}
+  #diagnosis-entry-title+button:hover{background:#f3eeff;border-radius:8px}
+  .diagnosis-problem{padding:12px 14px;margin:14px 0;background:#f7f6fd;border-radius:9px}
+  .diagnosis-problem p{margin:0}
+  .diagnosis-problem details{margin-top:10px;font-size:14px}
+  .diagnosis-problem summary{color:var(--accent);cursor:pointer;font-weight:700}
+  .diagnosis-problem details p{margin-top:6px}
+  .diagnosis-note{font-size:13px;color:var(--muted);margin:0}
+  .diagnosis-actions{display:flex;gap:8px;flex-wrap:wrap}
+  #diagnosis-status:empty,#diagnosis-transfer-status:empty{display:none}
+  .diagnosis-transfer{margin-top:13px}
+  .diagnosis-transfer summary{color:var(--muted);cursor:pointer;font-size:13px;font-weight:650}
+  .diagnosis-transfer[open] summary{color:var(--accent)}
+  .diagnosis-transfer-body{margin-top:9px;padding:13px;border-radius:10px;background:#f7f5fd}
+  .diagnosis-transfer-body hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+  .diagnosis-transfer-body p+button{margin-top:8px}
+  .diagnosis-transfer label{margin-top:12px}
+  .diagnosis-retest{margin:18px 0 38px}
+  .diagnosis-review{border-color:#dcd1f8}
+  .diagnosis-review .toolbar p{margin-top:3px}
+  .diagnosis-tally{padding:11px 13px;background:var(--soft);border-radius:8px;color:#362a7a;font-size:14px}
+  .diagnosis-cards{display:grid;gap:11px}
+  .diagnosis-case{padding:13px 14px;border:1px solid var(--line);border-radius:12px;min-width:0}
+  .diagnosis-case-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:8px}
+  .diagnosis-case-body .diagnosis-original{margin-top:3px}
+  .diagnosis-case-body label{font-size:13px}
+  .diagnosis-case-body .diagnosis-field{margin-top:3px}
+  .diagnosis-case h3,.projection-case h3{font-size:16px;margin:0}
+  .diagnosis-original{margin:8px 0 12px;padding:10px 12px;border-left:3px solid #9f8ae7;background:#f7f5fd;white-space:pre-wrap;overflow-wrap:anywhere}
+  .diagnosis-evidence{margin:0 0 10px;font-size:13px;color:var(--muted);white-space:pre-wrap}
+  .diagnosis-original mark{background:#e9dcff;color:inherit;border-radius:3px}
+  .diagnosis-case .case-toggle{display:inline-flex;gap:6px;align-items:center;font-size:13px;min-height:32px}
+  .case-toggle input{accent-color:var(--accent);width:16px;height:16px}
+  .projection .hero .button{margin-bottom:13px}
+  .projection-cases{display:grid;gap:12px}
+  .projection-case{padding:13px 15px;border:1px solid var(--line);border-radius:10px;min-width:0}
+  .projection-case .diagnosis-original{font-size:clamp(16px,2vw,23px)}
+  .projection-case p{margin:8px 0 0}
+  .diagnosis-graph svg{display:block;width:100%;height:auto;margin-bottom:10px;border-radius:8px;background:#f8f7ff}
+  .diagnosis-graph+.diagnosis-actions{margin-bottom:7px}
+  [data-graph-focus][aria-pressed="true"]{background:var(--soft);color:var(--accent);border-color:#b9a9f0}
+  @media(max-width:850px){
+    .diagnosis-hero-art{width:51%;opacity:.82}
+    .diagnosis-grid{grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:13px}
+    .diagnosis-case-body{grid-template-columns:minmax(0,1fr);gap:4px}
+  }
+  @media(max-width:690px){
+    .masthead .wrap{gap:6px}.masthead .mark{display:none}
+    .tool-nav{gap:1px}.tool-nav .button{padding-inline:7px}
+    .diagnosis-hero{min-height:0;margin:14px 0 12px;padding:19px 16px;border-radius:16px}
+    .diagnosis-hero h1{margin:6px 0}
+    .diagnosis-hero .diagnosis-course,.diagnosis-hero .diagnosis-hero-description{font-size:12px}
+    .diagnosis-hero-art{width:57%;opacity:.52}
+    .diagnosis-hero::after{background:linear-gradient(90deg,#121528 5%,#121528b0 47%,transparent)}
+    .diagnosis-grid,.projection-grid{grid-template-columns:minmax(0,1fr)}
+    .diagnosis-grid,.projection-grid{gap:12px}
+    .diagnosis-main{gap:12px}
+    .diagnosis-context h2{margin-bottom:3px}
+    .diagnosis-context .field-label{margin-top:7px}
+    .diagnosis-problem{margin:9px 0;padding:9px 11px;font-size:14px}
+    .diagnosis-card{padding-block:14px}
+    #diagnosis-input{min-height:82px}
+  }
+  @media print{
+    #diagnosis-view,#diagnosis-projection{display:none!important}
+  }
+
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <span class="mark" aria-hidden="true">∑</span><span>数学教师工具</span>
+    <nav class="tool-nav" aria-label="教师工具">
+      <button class="button" id="open-diagnosis" type="button" aria-current="page">诊断与讲评</button>
+      <button class="button" id="open-paper" type="button">试卷生成</button>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <!-- 诊断是默认首页；组卷预览仍在同一页，方便打印后返回复核。 -->
+  <div id="paper-view" hidden>
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title" tabindex="-1">六至九年级数学出题工具</h1>
+    <p>上海教育出版社 · 五·四学制。按册次和知识点生成学生卷及答案解析。</p>
+  </section>
+  <div class="workbench">
+    <form class="settings" id="settings">
+      <h2>出题设置</h2>
+      <div class="setting book-fields">
+        <div>
+          <label class="field-label" for="grade">年级</label>
+          <select class="grade-select" id="grade" name="grade">
+            <option value="6">六年级</option>
+            <option value="7">七年级</option>
+            <option value="8">八年级</option>
+            <option value="9">九年级</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="term">册次</label>
+          <select class="grade-select" id="term" name="term">
+            <option>上册</option>
+            <option>下册</option>
+            <option>上下册</option>
+          </select>
+        </div>
+      </div>
+      <fieldset class="setting" aria-labelledby="topic-label">
+        <div class="topic-top">
+          <span class="field-label" id="topic-label">知识点</span>
+          <button class="text-button" type="button" id="all-topics">全选</button>
+        </div>
+        <div class="topic-grid" id="topics"></div>
+      </fieldset>
+      <fieldset class="setting">
+        <legend>难度</legend>
+        <div class="difficulty">
+          <label class="level"><input type="radio" name="difficulty" value="basic"><span>基础</span></label>
+          <label class="level"><input type="radio" name="difficulty" value="standard" checked><span>标准</span></label>
+          <label class="level"><input type="radio" name="difficulty" value="advanced"><span>提高</span></label>
+        </div>
+      </fieldset>
+      <div class="setting">
+        <label class="field-label" for="count">题量</label>
+        <div class="count-row">
+          <span class="count-range">1–30 道</span>
+          <div class="count">
+            <button type="button" aria-label="减少一题" data-step="-1">−</button>
+            <input id="count" name="count" type="number" min="1" max="30" step="1" value="10" inputmode="numeric" required>
+            <button type="button" aria-label="增加一题" data-step="1">＋</button>
+          </div>
+        </div>
+      </div>
+      <button class="button primary generate" type="submit">生成新试卷</button>
+      <p class="form-status" id="form-status" role="status"></p>
+    </form>
+    <section class="preview" aria-labelledby="preview-title">
+      <div class="preview-header">
+        <div class="toolbar">
+          <h2 id="preview-title">试卷预览</h2>
+          <div class="exports">
+            <button class="button" id="print" type="button">打印学生卷</button>
+            <button class="button primary" id="download" type="button">下载学生卷 PDF</button>
+          </div>
+        </div>
+        <p class="export-status" id="export-status" role="status"></p>
+        <div class="tabs" role="tablist" aria-label="预览类型">
+          <button class="tab" id="tab-student" role="tab" type="button" aria-controls="paper" aria-selected="true" data-mode="student">学生卷</button>
+          <button class="tab" id="tab-answers" role="tab" type="button" aria-controls="paper" aria-selected="false" tabindex="-1" data-mode="answers">答案解析</button>
+        </div>
+      </div>
+      <div class="preview-surface">
+        <article class="paper" id="paper" role="tabpanel" aria-labelledby="tab-student"></article>
+      </div>
+    </section>
+  </div>
+  </div>
+  <section id="diagnosis-view" aria-labelledby="diagnosis-title">
+  <section class="hero diagnosis-hero">
+    <div class="diagnosis-hero-copy">
+      <p class="diagnosis-course">沪教版 · 六至九年级数学</p>
+      <h1 id="diagnosis-title" tabindex="-1">AI 错因诊断与讲评台</h1>
+      <p class="diagnosis-hero-description">从学生的解题步骤找出可能的错因，带着一句追问去讲评。</p>
+    </div>
+    <div class="diagnosis-hero-art" aria-hidden="true">
+      <canvas id="diagnosis-hero-plot" width="800" height="400"></canvas>
+    </div>
+  </section>
+  <div class="diagnosis-grid">
+    <section class="settings diagnosis-card diagnosis-context" aria-labelledby="diagnosis-question-title">
+      <h2 id="diagnosis-question-title">当前题目</h2>
+      <div class="diagnosis-question-controls">
+        <label class="field-label" for="diagnosis-grade">年级
+          <select id="diagnosis-grade" class="grade-select">
+            <option value="6">六年级</option>
+            <option value="7">七年级</option>
+            <option value="8">八年级</option>
+            <option value="9" selected>九年级</option>
+          </select>
+        </label>
+        <label class="field-label" for="diagnosis-topic">知识点
+          <select id="diagnosis-topic" class="grade-select"></select>
+        </label>
+      </div>
+      <label class="field-label" id="diagnosis-variant-field" for="diagnosis-variant" hidden>题型
+        <select id="diagnosis-variant" class="grade-select"></select>
+      </label>
+      <form id="diagnosis-custom" hidden>
+        <label class="field-label" for="diagnosis-custom-prompt">课堂题目</label>
+        <textarea id="diagnosis-custom-prompt" rows="3" required maxlength="800" placeholder="粘贴题干和已知条件"></textarea>
+        <label class="field-label" for="diagnosis-custom-answer">参考答案（选填）</label>
+        <textarea id="diagnosis-custom-answer" rows="2" maxlength="600"></textarea>
+        <button class="button" type="submit">使用这道题</button>
+      </form>
+      <div class="diagnosis-problem">
+        <p id="diagnosis-question"></p>
+        <details id="diagnosis-reference"><summary>查看参考答案与解析</summary><p id="diagnosis-answer"></p></details>
+      </div>
+      <div class="diagnosis-actions">
+        <button class="button" id="diagnosis-reroll" type="button">换一道</button>
+        <button class="button" id="diagnosis-print" type="button">打开试卷</button>
+      </div>
+    </section>
+    <div class="diagnosis-main">
+      <section class="settings diagnosis-card" aria-labelledby="diagnosis-entry-title">
+        <div class="toolbar">
+          <h2 id="diagnosis-entry-title">学生作答</h2>
+          <button class="text-button" id="diagnosis-example" type="button">试用示例</button>
+        </div>
+        <label for="diagnosis-input" class="diagnosis-note">保留解题步骤，去掉姓名、班级和学号。多份作答用空行隔开。</label>
+        <div class="diagnosis-composer">
+          <textarea id="diagnosis-input" rows="4" maxlength="12000" placeholder="粘贴学生的解题过程"></textarea>
+          <div class="diagnosis-composer-bar">
+            <span class="diagnosis-note" id="diagnosis-method"></span>
+            <button class="button primary" id="diagnosis-check" type="button"><span class="diagnosis-spark" aria-hidden="true">✦</span><span id="diagnosis-check-label">分析作答</span></button>
+          </div>
+        </div>
+        <p class="form-status" id="diagnosis-status" role="status"></p>
+        <details class="diagnosis-transfer" id="diagnosis-transfer">
+          <summary>其他分析方式</summary>
+          <div class="diagnosis-transfer-body">
+            <button class="button" id="diagnosis-manual" type="button">自己填写错因</button>
+            <hr>
+            <p class="diagnosis-note">用其他 AI 分析时，先复制分析材料，再贴回它的回答。</p>
+            <button class="button" id="diagnosis-copy" type="button">复制分析材料</button>
+            <label for="diagnosis-prompt" class="field-label" id="diagnosis-prompt-label" hidden>选中并复制分析材料</label>
+            <textarea id="diagnosis-prompt" rows="4" readonly hidden></textarea>
+            <label for="diagnosis-result" class="field-label">粘贴 AI 的回答</label>
+            <textarea id="diagnosis-result" rows="4" maxlength="45000" spellcheck="false"></textarea>
+            <button class="button" id="diagnosis-import" type="button">查看分析结果</button>
+            <p class="form-status" id="diagnosis-transfer-status" role="status"></p>
+          </div>
+        </details>
+      </section>
+      <section class="settings diagnosis-card diagnosis-review" id="diagnosis-review" hidden aria-labelledby="diagnosis-review-title">
+        <div class="toolbar">
+          <div><h2 id="diagnosis-review-title" tabindex="-1">分析结果</h2><p id="diagnosis-source" class="diagnosis-note"></p></div>
+          <button class="button primary" id="diagnosis-project" type="button" disabled>进入投屏讲评</button>
+        </div>
+        <p id="diagnosis-tally" class="diagnosis-tally" role="status"></p>
+        <div id="diagnosis-cards" class="diagnosis-cards"></div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<section id="diagnosis-projection" class="projection" hidden aria-labelledby="projection-title">
+  <section class="hero">
+    <button class="button" id="diagnosis-return" type="button">返回复核</button>
+    <h1 id="projection-title" tabindex="-1">课堂讲评</h1>
+    <p id="projection-question"></p>
+  </section>
+  <div class="projection-grid">
+    <section class="settings diagnosis-card">
+      <h2>比较解题过程</h2>
+      <div id="projection-cases" class="projection-cases"></div>
+    </section>
+    <section class="settings diagnosis-card" id="projection-graph-card">
+      <h2>在图像上找依据</h2>
+      <div id="diagnosis-graph" class="diagnosis-graph"></div>
+      <div class="diagnosis-actions">
+        <button class="button" data-graph-focus="vertex" type="button" aria-pressed="false">看顶点与对称轴</button>
+        <button class="button" data-graph-focus="roots" type="button" aria-pressed="false">看横轴交点</button>
+      </div>
+      <p id="graph-caption" class="diagnosis-note" aria-live="polite"></p>
+    </section>
+  </div>
+  <section class="settings diagnosis-card diagnosis-retest" id="diagnosis-retest-card">
+    <div class="toolbar">
+      <div><h2>同类题复测</h2><p class="diagnosis-note">请学生独立作答，并写出关键依据。</p></div>
+      <button class="button primary" id="diagnosis-retest" type="button">生成并打开复测试卷</button>
+    </div>
+    <p class="form-status" id="diagnosis-retest-status" role="status"></p>
+  </section>
+  <section class="settings diagnosis-card diagnosis-retest" id="diagnosis-custom-retest" hidden>
+    <form id="diagnosis-custom-retest-form">
+      <h2>用自己的题复测</h2>
+      <label class="field-label" for="diagnosis-retest-prompt">复测题目</label>
+      <textarea id="diagnosis-retest-prompt" rows="3" required maxlength="800"></textarea>
+      <label class="field-label" for="diagnosis-retest-answer">参考答案（选填）</label>
+      <textarea id="diagnosis-retest-answer" rows="2" maxlength="600"></textarea>
+      <button class="button primary" type="submit">打开复测试卷</button>
+    </form>
+  </section>
+</section>
+
+</main>
+<script>
+// 沪教版五·四学制六年级的九章。题目为原创数值模板，按教材册次组织。
+const GRADE_6 = (() => {
+  const number = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const labelFor = { basic: 0, standard: 1, advanced: 2 };
+  const signed = value => value < 0 ? `(${value})` : String(value);
+  const template = (id, label, term, create) => ({
+    id, label, term,
+    generate(difficulty) {
+      const level = labelFor[difficulty];
+      const [prompt, answer, explanation, diagnosisRule] = create(level);
+      return { topic: id, prompt, answer: String(answer), explanation, lines: level + 1, diagnosisRule };
+    }
+  });
+
+  return [
+    template("rational", "有理数", "上册", level => {
+      const a = number(2, 27), b = number(2, 18), c = number(2, 9);
+      if (level === 0) {
+        return [`计算：(${-a}) + ${b}。`, b - a, `异号两数相加，用绝对值较大的数减较小的数并保留较大绝对值的数的符号。结果是 ${b - a}。`, { type: "sign", negative: -a, positive: b }];
+      }
+      if (level === 1) {
+        return [`计算：(${-a}) × ${b} − (${-c})。`, -a * b + c, `先乘得 ${-a * b}，再把减去负数转成加上 ${c}，得 ${-a * b + c}。`];
+      }
+      return [`计算：(${-a}) + (${-c})² − ${b} × (${-c})。`, -a + c * c + b * c,
+        `先算乘方 ${c * c} 和乘法 ${-b * c}，再按顺序算加减，得到 ${-a + c * c + b * c}。`];
+    }),
+    template("expression", "简单的代数式", "上册", level => {
+      const a = number(2, 22), b = number(1, 19), x = -number(2, 13);
+      if (level === 0) {
+        return [`当 x = ${x} 时，求 ${a}x + ${b} 的值。`, a * x + b, `把 x = ${x} 代入，得到 ${a} × ${signed(x)} + ${b} = ${a * x + b}。`];
+      }
+      if (level === 1) {
+        return [`合并同类项：${a}x + ${b} + ${b}x − ${a + b}。`, `${a + b}x − ${a}`,
+          `x 项系数相加为 ${a + b}，常数项合并为 ${-a}。`];
+      }
+      return [`先化简，再求值：${a}(x + ${b}) − ${a + b}(x − 1)，其中 x = ${x}。`,
+        -b * x + a * b + a + b,
+        `去括号并合并同类项得 −${b}x + ${a * b + a + b}。代入 x = ${x} 得 ${-b * x + a * b + a + b}。`];
+    }),
+    template("equation", "一元一次方程", "上册", level => {
+      const a = number(2, 18), b = number(2, 24), x = number(2, 20);
+      if (level === 0) {
+        return [`解方程：${a}x + ${b} = ${a * x + b}。`, `x = ${x}`, `两边减 ${b} 得 ${a}x = ${a * x}，再同除以 ${a}。`];
+      }
+      if (level === 1) {
+        return [`解方程：${a}(x + ${b}) = ${a - 1}x + ${x + a * b}。`, `x = ${x}`,
+          `去括号，两边减去 ${a - 1}x，再减去 ${a * b}，得 x = ${x}。`];
+      }
+      return [`某次活动中，${a} 个相同价位的单人票加一张 ${b} 元的材料券，总价与 ${a - 1} 张同价单人票加一张 ${b + x} 元的组合材料券相同。单人票多少钱？`,
+        `${x} 元`, `设单人票 x 元，列式 ${a}x + ${b} = ${a - 1}x + ${b + x}，移项后得 x = ${x}。`];
+    }),
+    template("segments-angles", "线段与角", "上册", level => {
+      const a = number(3, 35), b = number(3, 30), c = number(15, 85);
+      if (level === 0) {
+        return [`点 B 在线段 AC 上，AB = ${a} cm，BC = ${b} cm。求 AC。`, `${a + b} cm`, `B 在线段 AC 上，所以 AC = AB + BC = ${a + b} cm。`];
+      }
+      if (level === 1) {
+        return [`射线 OC 在 ∠AOB 内部，∠AOB = ${c + b}°，∠AOC = ${c}°。求 ∠COB。`, `${b}°`,
+          `∠COB = ∠AOB − ∠AOC = ${c + b}° − ${c}° = ${b}°。`];
+      }
+      return [`已知 ∠AOB = ${2 * (a + b)}°，OC 是它的角平分线，OD 在 ∠AOC 内部，∠AOD = ${a}°。求 ∠DOB。`,
+        `${a + 2 * b}°`, `角平分后 ∠AOC = ∠COB = ${a + b}°。∠DOC = ${b}°，所以 ∠DOB = ${b}° + ${a + b}° = ${a + 2 * b}°。`];
+    }),
+    template("proportion", "比与比例", "下册", level => {
+      const a = number(2, 19), b = number(2, 14), units = number(4, 22), price = number(8, 35);
+      if (level === 0) {
+        return [`红球与蓝球的个数比为 ${a}∶${b}，红球有 ${a * units} 个。蓝球有多少个？`, `${b * units} 个`,
+          `每份有 ${a * units} ÷ ${a} = ${units} 个。蓝球占 ${b} 份，共 ${b * units} 个。`];
+      }
+      if (level === 1) {
+        return [`一件标价 ${price * 10} 元的商品按标价的 ${units + 65}% 销售。售价是多少？`, `${price * (units + 65) / 10} 元`,
+          `以标价为单位 1，售价 = ${price * 10} × ${units + 65}% = ${price * (units + 65) / 10} 元。`];
+      }
+      return [`两个班共 ${(a + b) * units} 人，人数之比为 ${a}∶${b}。两个班各有 ${units} 人参加活动。两班未参加活动的人数比是多少？`,
+        `${a - 1}∶${b - 1}`, `按比求得两班各有 ${a * units} 和 ${b * units} 人。各减 ${units} 后，再同除以 ${units}，得到 ${a - 1}∶${b - 1}。`];
+    }),
+    template("circle-sector", "圆与扇形", "下册", level => {
+      const r = number(2, 53), d = number(2, 8), n = number(1, d - 1);
+      if (level === 0) {
+        return [`一个圆的半径为 ${r} cm，求周长（保留 π）。`, `${2 * r}π cm`, `用周长公式 2πr，代入 r = ${r}，得 ${2 * r}π cm。`];
+      }
+      if (level === 1) {
+        return [`扇形半径为 ${r} cm，圆心角占周角的 ${n}/${d}。求扇形面积（保留 π）。`, `(${n * r * r}/${d})π cm²`,
+          `扇形面积占对应整圆面积的 ${n}/${d}，所以面积为 (${n * r * r}/${d})π cm²。`];
+      }
+      return [`圆心角为 90° 的扇形，其半径为 ${r} cm。求扇形的周长（保留 π）。`,
+        `(2 × ${r} + ${r}π/2) cm`, `弧长等于圆周长的 1/4，即 ${r}π/2 cm。扇形周长还要加上两条半径，共 (2 × ${r} + ${r}π/2) cm。`];
+    }),
+    template("data-chance", "可能性与统计图表", "下册", level => {
+      const a = number(2, 13), b = a + number(1, 14), t = number(3, 8), m = number(1, 15);
+      if (level === 0) {
+        return [`袋中有 ${a} 个白球和 ${b} 个红球，除颜色外完全相同。随机摸出 1 个球，摸到哪种颜色的可能性更大？`,
+          "红色", `每个球被摸到的机会相同，红球个数 ${b} 大于白球个数 ${a}。`];
+      }
+      if (level === 1) {
+        return [`某年级调查了 ${20 * t} 名学生，其中 ${m * t} 人最喜欢羽毛球。制作扇形统计图时，羽毛球对应的百分比是多少？`,
+          `${m * 5}%`, `分项人数除以总人数，即 ${m * t} ÷ ${20 * t} = ${m * 5}%。`];
+      }
+      return [`甲组共 ${a * 10} 人，有 40% 选甲方案；乙组共 ${b * 10} 人，有 60% 选甲方案。两组合计有多少人选甲方案？`,
+        `${4 * a + 6 * b} 人`, `甲组有 ${a * 10} × 40% = ${4 * a} 人，乙组有 ${b * 10} × 60% = ${6 * b} 人，合计 ${4 * a + 6 * b} 人。`];
+    }),
+    template("cylinder-cone", "圆柱与圆锥", "下册", level => {
+      const r = number(2, 25), h = number(2, 29), s = r + number(1, 18);
+      if (level === 0) {
+        return [`底面半径为 ${r} cm、高为 ${h} cm 的直圆柱沿一条母线剪开侧面。所得长方形的两边分别是多少（保留 π）？`,
+          `${2 * r}π cm、${h} cm`, `两边分别等于底面周长 2πr 和圆柱的高。`];
+      }
+      if (level === 1) {
+        return [`直圆锥的母线长为 ${s} cm，底面半径为 ${r} cm。侧面展开成扇形后，弧长和扇形半径分别是多少（保留 π）？`,
+          `${2 * r}π cm、${s} cm`, `弧长等于底面周长 2πr，扇形半径等于母线长。`];
+      }
+      return [`直圆锥的底面半径为 ${r} cm，母线长为 ${s} cm。侧面展开后，扇形面积占同半径整圆面积的几分之几？`,
+        `${r}/${s}`, `扇形面积比例等于弧长比例。用底面周长 2π×${r} 除以展开图对应整圆的周长 2π×${s}，得到 ${r}/${s}。`];
+    }),
+    template("equation-system", "二元一次方程组", "下册", level => {
+      const x = number(2, 23), y = number(1, x - 1), k = number(2, 6);
+      if (level === 0) {
+        return [`解方程组：x + y = ${x + y}，x − y = ${x - y}。`, `x = ${x}，y = ${y}`,
+          `两式相加消去 y，得 2x = ${2 * x}。把 x = ${x} 代入第一式求得 y = ${y}。`];
+      }
+      if (level === 1) {
+        return [`解方程组：${k}x + y = ${k * x + y}，x + y = ${x + y}。`, `x = ${x}，y = ${y}`,
+          `第一式减第二式，得 ${k - 1}x = ${(k - 1) * x}。解出 x 后代入第二式。`];
+      }
+      return [`学校共购入 ${x + y} 套器材，其中 A 套装 ${k + 4} 元/套，B 套装 4 元/套，总价 ${(k + 4) * x + 4 * y} 元。各购入多少套？`,
+        `A 套装 ${x} 套，B 套装 ${y} 套`,
+        `设两种套装分别为 x、y 套，列 x + y = ${x + y}，${k + 4}x + 4y = ${(k + 4) * x + 4 * y}。第二式减第一式的 4 倍，得 ${k}x = ${k * x}，进而求出 y。`];
+    })
+  ];
+})();
+
+function shufflePaperItems(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const pick = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[pick]] = [shuffled[pick], shuffled[index]];
+  }
+  return shuffled;
+}
+
+const GRADE_7 = (() => {
+  const integer = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const pick = (items) => items[integer(0, items.length - 1)];
+  const grouped = (number) => number < 0 ? `(${number})` : String(number);
+  const result = (prompt, answer, explanation, lines = 2) => ({ prompt, answer: String(answer), explanation, lines });
+  const power = (value) => [...String(value)].map((digit) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(digit)]).join('');
+
+  // 化简结果省略系数 1 和零常数项，符合卷面书写习惯。
+  function linear(coefficient, offset) {
+    const variable = coefficient === 1 ? 'x' : `${coefficient}x`;
+    if (offset === 0) return variable;
+    return `${variable} ${offset < 0 ? '−' : '+'} ${Math.abs(offset)}`;
+  }
+
+  // 先取整数量和答案，再按数学关系构造题面，避免碰巧生成无解、重根或小数过长的题。
+  function topic(id, label, term, generators) {
+    return {
+      id,
+      label,
+      term,
+      generate(difficulty) {
+        return { topic: id, ...pick(generators[difficulty])() };
+      },
+    };
+  }
+
+  return [
+    topic('g7-algebra', '整式的加减', '上册', {
+      basic: [
+        () => {
+          const a = integer(2, 12), b = integer(2, 12), c = integer(2, 9);
+          return result(`合并同类项：${a}x + ${b}x + ${c}。`, `${a + b}x + ${c}`, `同类项 ${a}x 与 ${b}x 的系数相加，字母部分保留，结果是 ${a + b}x + ${c}。`, 1);
+        },
+        () => {
+          const a = integer(2, 9), b = integer(3, 19), x = integer(-5, 8);
+          return result(`当 x = ${x} 时，求 ${a}x + ${b} 的值。`, a * x + b, `代入 x 得 ${a} × ${grouped(x)} + ${b} = ${a * x + b}。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(5, 13), b = integer(2, a - 1), c = integer(2, 12), d = integer(2, 14);
+          const answer = linear(a - b, c + d);
+          return result(`化简 (${a}x + ${c}) − (${b}x − ${d})。`, answer, `去掉减号后的括号，括号里的各项变号，得到 ${a}x + ${c} − ${b}x + ${d}，合并同类项得 ${answer}。`);
+        },
+        () => {
+          const a = integer(2, 8), b = integer(2, 11), c = integer(2, 8), d = integer(2, 14);
+          const answer = linear(a * b, d - a * c);
+          return result(`化简 ${a}(${b}x − ${c}) + ${d}。`, answer, `用分配律去括号得到 ${a * b}x − ${a * c} + ${d}，合并常数项得 ${answer}。`);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(2, 10), b = integer(2, 9), c = integer(2, 12), x = pick([-4, -3, -2, 2, 3, 4]);
+          return result(`先化简，再求值：${a}x² − (${a}x² − ${b}x + ${c})，其中 x = ${x}。`, `化简得 ${b}x − ${c}，值为 ${b * x - c}`, `去括号后两个二次项抵消，得到 ${b}x − ${c}。代入 x = ${x} 得 ${b} × ${grouped(x)} − ${c} = ${b * x - c}。`, 3);
+        },
+        () => {
+          const a = integer(2, 8), b = integer(2, 8), c = integer(3, 13), d = integer(3, 15), x = integer(-5, 7);
+          return result(`当 x = ${x} 时，求 ${a}(x + ${b}) − ${c}(${d} − x) 的值。`, (a + c) * x + a * b - c * d, `用分配律去括号并合并同类项，得 ${linear(a + c, a * b - c * d)}。代入 x = ${x}，得 ${(a + c) * x + a * b - c * d}。`, 3);
+        },
+      ],
+    }),
+
+    topic('g7-algebra-products', '整式的乘除', '上册', {
+      basic: [
+        () => {
+          const a = integer(2, 8), b = integer(2, 8), m = integer(2, 5), n = integer(2, 5);
+          return result(`计算 ${a}x${power(m)} × ${b}x${power(n)}。`, `${a * b}x${power(m + n)}`,
+            `系数相乘，同底数幂相乘时指数相加，${a} × ${b} = ${a * b}，${m} + ${n} = ${m + n}。`, 1);
+        },
+        () => {
+          const a = integer(2, 9), b = integer(2, 9), c = integer(2, 15);
+          return result(`计算 ${a}x(${b}x + ${c})。`, `${a * b}x² + ${a * c}x`, `用 ${a}x 依次乘括号内两项，得 ${a * b}x² + ${a * c}x。`);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(2, 12), b = integer(2, 15);
+          return result(`展开 (${a}x − ${b})²。`, `${a * a}x² − ${2 * a * b}x + ${b * b}`,
+            `用完全平方公式 (u − v)² = u² − 2uv + v²，代入 u = ${a}x、v = ${b}，得 ${a * a}x² − ${2 * a * b}x + ${b * b}。`, 3);
+        },
+        () => {
+          const a = integer(2, 12), b = integer(2, 15), c = integer(2, 8);
+          return result(`计算 (${a * c}x³ − ${b * c}x²) ÷ ${c}x（x ≠ 0）。`, `${a}x² − ${b}x`,
+            `用多项式每一项除以 ${c}x，得到 ${a}x² − ${b}x。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(2, 10), b = integer(2, 15), c = integer(2, 19);
+          return result(`化简 (${a}x + ${b})(${a}x − ${b}) − (${a}x − ${c})²。`, `${2 * a * c}x − ${b * b + c * c}`,
+            `第一组用平方差公式得 ${a * a}x² − ${b * b}，第二组用完全平方公式得 ${a * a}x² − ${2 * a * c}x + ${c * c}。相减后合并同类项，得 ${2 * a * c}x − ${b * b + c * c}。`, 4);
+        },
+        () => {
+          const a = integer(2, 9), b = integer(2, 12), c = integer(2, 13), d = integer(2, 7);
+          return result(`化简 [((${a}x + ${b})(${a}x − ${b}) + ${b * b}) ÷ x] × ${d} + ${c}x（x ≠ 0）。`,
+            `${a * a * d + c}x`, `平方差公式给出括号内的和为 ${a * a}x²。除以 x，再乘 ${d}，得 ${a * a * d}x，加 ${c}x 得 ${a * a * d + c}x。`, 4);
+        },
+      ],
+    }),
+    topic('g7-factorization', '因式分解', '上册', {
+      basic: [
+        () => {
+          const a = integer(2, 18), b = integer(2, 15);
+          return result(`因式分解：${a}x² + ${a * b}x。`, `${a}x(x + ${b})`,
+            `两项的公因式是 ${a}x，提出它后括号里剩 x + ${b}。`, 2);
+        },
+        () => {
+          const a = integer(2, 15), b = integer(2, 15);
+          return result(`因式分解：${a}x² − ${a * b}x。`, `${a}x(x − ${b})`,
+            `两项的公因式是 ${a}x，提出它后括号里剩 x − ${b}。`, 2);
+        },
+      ],
+      standard: [
+        () => {
+          const b = integer(2, 75);
+          return result(`用平方差公式分解因式：x² − ${b * b}。`, `(x − ${b})(x + ${b})`,
+            `因为 ${b * b} = ${b}²，所以 x² − ${b * b} = (x − ${b})(x + ${b})。`);
+        },
+        () => {
+          const b = integer(2, 75), sign = pick(['+', '−']);
+          return result(`用完全平方公式分解因式：x² ${sign} ${2 * b}x + ${b * b}。`, `(x ${sign} ${b})²`,
+            `首尾两项是 x² 和 ${b}²，中间项是 ${sign}2 × x × ${b}，可写成 (x ${sign} ${b})²。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(2, 10), b = integer(2, 12);
+          return result(`将 ${a}x² − ${a * b * b} 分解因式。`, `${a}(x − ${b})(x + ${b})`,
+            `先提出公因数 ${a}，得 ${a}(x² − ${b * b})。再用平方差公式，得到 ${a}(x − ${b})(x + ${b})。`, 3);
+        },
+        () => {
+          const a = integer(2, 10), b = integer(a + 1, a + 7);
+          return result(`将 x² + ${a + b}x + ${a * b} 分解因式。`, `(x + ${a})(x + ${b})`,
+            `找两个数，其和为 ${a + b}、其积为 ${a * b}，可取 ${a} 和 ${b}。十字相乘得 (x + ${a})(x + ${b})。`, 4);
+        },
+      ],
+    }),
+    topic('g7-rational-expressions', '分式', '上册', {
+      basic: [
+        () => {
+          const a = integer(2, 17), b = integer(2, 11);
+          return result(`约分：(${a}x)/(${a * b}x)（x ≠ 0）。`, `1/${b}`, `分子与分母同除以非零公因式 ${a}x，得到 1/${b}。`);
+        },
+        () => {
+          const a = integer(2, 17), b = integer(2, 15);
+          return result(`当 x 取什么值时，分式 ${a}/(x + ${b}) 有意义？`, `x ≠ −${b}`,
+            `分母不等于 0，所以 x + ${b} ≠ 0，即 x ≠ −${b}。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(2, 12), b = integer(2, 12), c = integer(2, 17);
+          return result(`计算 ${a}/(x + ${c}) + ${b}/(x + ${c})（x ≠ −${c}）。`, `${a + b}/(x + ${c})`,
+            `同分母的分式相加，分母不变，分子 ${a} + ${b} = ${a + b}。`, 2);
+        },
+        () => {
+          const a = integer(2, 12), b = integer(2, 14), c = integer(2, 11);
+          return result(`化简 [(${a}x)/(x + ${b})] × [(x + ${b})/(${a * c}x)]（x ≠ 0 且 x ≠ −${b}）。`, `1/${c}`,
+            `把分子、分母分别相乘，约去公共因式 ${a}x(x + ${b})，得到 1/${c}。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(2, 12), b = integer(2, 12), c = a + integer(2, 14);
+          return result(`解分式方程 ${a}/(x − ${b}) + 1 = ${c}/(x − ${b})。`, `x = ${b + c - a}`,
+            `两边同乘 x − ${b}，得 ${a} + x − ${b} = ${c}，解得 x = ${b + c - a}。代回原式的分母得 ${c - a} ≠ 0，所以是原方程的解。`, 4);
+        },
+        () => {
+          const a = integer(2, 10), b = integer(2, 16), c = integer(2, 12);
+          return result(`解分式方程 ${a * c}/(x − ${b}) = ${a}。`, `x = ${b + c}`,
+            `两边同乘 x − ${b}，得 ${a * c} = ${a}(x − ${b})，解得 x = ${b + c}。验算分母为 ${c} ≠ 0，所以原方程的解是 x = ${b + c}。`, 3);
+        },
+      ],
+    }),
+    topic('g7-transformations', '图形的运动', '上册', {
+      basic: [
+        () => {
+          const a = integer(3, 90), b = integer(4, 45);
+          return result(`将长为 ${a} 厘米的线段 AB 向右平移 ${b} 厘米，得到 A′B′。A′B′ 长多少厘米？`, `${a} 厘米`,
+            `平移只改变位置，保持线段长度，所以 A′B′ = AB = ${a} 厘米。`, 1);
+        },
+        () => {
+          const a = integer(10, 130), b = integer(3, 40);
+          return result(`∠AOB 的度数是 ${a}°，将它绕 O 点旋转 ${b}° 得到 ∠A′OB′。∠A′OB′ 的度数是多少？`, `${a}°`,
+            `旋转保持角的大小，所以 ∠A′OB′ = ∠AOB = ${a}°。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(4, 70);
+          return result(`点 A 与点 A′ 关于点 O 中心对称。已知 AA′ = ${a * 2} 厘米，求 OA 的长度。`, `${a} 厘米`,
+            `对称中心 O 是 AA′ 的中点，所以 OA = ${a * 2} ÷ 2 = ${a}（厘米）。`, 2);
+        },
+        () => {
+          const a = integer(3, 70), b = integer(2, a - 1);
+          return result(`A、B 在同一条水平直线上，A 在 B 的左边，AB = ${a} 厘米。把 AB 向右平移 ${b} 厘米得到 A′B′。A′B 的长度是多少？`, `${a - b} 厘米`,
+            `A′ 在 A 与 B 之间，且 AA′ = ${b} 厘米，所以 A′B = AB − AA′ = ${a} − ${b} = ${a - b}（厘米）。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(30, 120), b = integer(5, a - 2);
+          return result(`把射线 OA 绕 O 顺时针旋转 ${a}° 得到 OB，再把 OB 绕 O 逆时针旋转 ${b}° 得到 OC。求 ∠AOC 的度数。`, `${a - b}°`,
+            `先顺时针后逆时针，旋转角相减。${a}° − ${b}° = ${a - b}°，小于 180°，即为 ∠AOC 的度数。`, 3);
+        },
+        () => {
+          const a = integer(4, 29), b = integer(4, 26);
+          return result(`A、O、B 依次在一条直线上，OA = ${a} 厘米，OB = ${b} 厘米。将点 A 绕 O 旋转 180° 得 A′。A′B 的长度是多少？`, `${Math.abs(a - b)} 厘米`,
+            `旋转 180° 后，A′ 和 B 位于 O 的同一侧，OA′ = OA = ${a} 厘米。因此 A′B = |${a} − ${b}| = ${Math.abs(a - b)}（厘米）。`, 3);
+        },
+      ],
+    }),
+    // 上下册顺序按沪教版五四学制七年级新教材的第 10 至 18 章排列。
+    topic('g7-inequalities', '一元一次不等式', '下册', {
+      basic: [
+        () => {
+          const a = integer(2, 15), x = integer(-13, 22);
+          return result(`解不等式 x + ${a} > ${x + a}。`, `x > ${x}`, `不等式两边同减 ${a}，不等号方向保持，得到 x > ${x}。`, 1);
+        },
+        () => {
+          const a = integer(2, 12), x = integer(-12, 21);
+          return result(`解不等式 ${a}x ≤ ${a * x}。`, `x ≤ ${x}`, `两边同除以正数 ${a}，不等号方向保持，得到 x ≤ ${x}。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(2, 12), b = integer(2, 19), x = integer(-10, 15);
+          return { ...result(`解不等式 −${a}x + ${b} > ${b - a * x}。`, `x < ${x}`, `两边减 ${b}，得 −${a}x > ${-a * x}。两边除以负数 −${a}，不等号方向改变，得 x < ${x}。`, 3), diagnosisRule: { type: "inequality", coefficient: -a, boundary: x } };
+        },
+        () => {
+          const a = integer(2, 6), b = integer(2, 15), x = integer(-10, 15);
+          return result(`解不等式 ${a}(x − ${b}) ≤ ${a * (x - b)}，并写出最大整数解。`, `x ≤ ${x}，最大整数解是 ${x}`, `两边同除以正数 ${a} 得 x − ${b} ≤ ${x - b}，再加 ${b} 得 x ≤ ${x}。等号成立，最大整数解是 ${x}。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(-12, 14), b = a + integer(2, 6), c = integer(2, 7), d = integer(2, 9);
+          const values = Array.from({ length: b - a }, (_, i) => a + i + 1).join('、');
+          return result(`解不等式组：${c}x > ${c * a}，−${d}x ≥ ${-d * b}，并列出所有整数解。`, `${a} < x ≤ ${b}，整数解为 ${values}`, `第一个不等式两边除以 ${c} 得 x > ${a}。第二个两边除以 −${d}，不等号方向改变，得 x ≤ ${b}。取公共部分并枚举，得到 ${values}。`, 4);
+        },
+        () => {
+          const fixed = integer(3, 15), each = integer(2, 9), maximum = integer(5, 19);
+          const budget = fixed + each * maximum + integer(1, each - 1);
+          return result(`订购资料需付 ${fixed} 元配送费，每本 ${each} 元。预算不超过 ${budget} 元，最多可以订多少本？`, `${maximum} 本`, `设订 x 本，总价满足 ${fixed} + ${each}x ≤ ${budget}，所以 x ≤ (${budget} − ${fixed})/${each}。订购本数为整数，最多订 ${maximum} 本。`, 4);
+        },
+      ],
+    }),
+    topic('g7-geometry', '相交线与平行线', '下册', {
+      basic: [
+        () => {
+          const a = integer(26, 148);
+          return result(`两条直线相交形成四个角，其中一个角为 ${a}°。与它相邻且组成平角的角为多少度？`, `${180 - a}°`, `两个角组成平角，度数和为 180°，所求角为 180° − ${a}° = ${180 - a}°。`, 1);
+        },
+        () => {
+          const a = integer(31, 149);
+          return result(`两条直线相交，其中一个角为 ${a}°。求它的对顶角的度数。`, `${a}°`, `两条直线相交所成的对顶角相等，所以它的对顶角为 ${a}°。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(35, 146);
+          return result(`两条平行线被第三条直线所截，一对同旁内角中一个角为 ${a}°。另一个角为多少度？`, `${180 - a}°`, `两直线平行，同旁内角互补，所以另一个角为 180° − ${a}° = ${180 - a}°。`);
+        },
+        () => {
+          const x = integer(15, 50), a = integer(7, 24), b = x + a;
+          return result(`两条平行线被第三条直线所截，一对内错角分别为 (2x + ${a})° 和 (x + ${b})°。求 x 和这两个角的度数。`, `x = ${x}，两个角均为 ${2 * x + a}°`, `内错角相等，列方程 2x + ${a} = x + ${b}，解得 x = ${x}。代入得两个角都为 ${2 * x + a}°。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const x = integer(14, 35), a = integer(8, 24), b = 180 - 3 * x - a;
+          return result(`两条平行线被第三条直线所截，一对同旁内角分别为 (2x + ${a})° 和 (x + ${b})°。求 x 和这两个角的度数。`, `x = ${x}，两角分别为 ${2 * x + a}° 和 ${x + b}°`, `两直线平行，同旁内角互补，列方程 2x + ${a} + x + ${b} = 180。解得 x = ${x}，分别代入得 ${2 * x + a}° 和 ${x + b}°。`, 4);
+        },
+        () => {
+          const a = integer(3, 12), b = a + integer(1, 10), unit = 180 / (a + b);
+          return result(`两条直线相交，一对相邻且组成平角的角之比为 ${a}∶${b}。求交点处四个角的度数。（有小数时保留一位小数）`, `两个 ${(a * unit).toFixed(1)}°，两个 ${(b * unit).toFixed(1)}°`, `这一对角共 ${a + b} 份，度数和为 180°，两角分别是 180° × ${a}/(${a} + ${b}) 和 180° × ${b}/(${a} + ${b})。对顶角相等，因此各有两个。`, 4);
+        },
+      ],
+    }),
+    topic('g7-triangles', '三角形', '下册', {
+      basic: [
+        () => {
+          const a = integer(28, 81), b = integer(35, 82);
+          return result(`在三角形 ABC 中，∠A = ${a}°，∠B = ${b}°。∠C 是多少度？`, `${180 - a - b}°`,
+            `三角形内角和为 180°，所以 ∠C = 180° − ${a}° − ${b}° = ${180 - a - b}°。`, 1);
+        },
+        () => {
+          const a = integer(6, 22), b = integer(9, 31), c = integer(Math.abs(a - b), a + b + 2) || 1;
+          const valid = c < a + b && c > Math.abs(a - b);
+          return result(`三条长度分别是 ${a}、${b}、${c} 厘米的线段能组成三角形吗？请说明理由。`, valid ? '能' : '不能',
+            `第三边必须严格大于两边之差 ${Math.abs(a - b)}，并且严格小于两边之和 ${a + b}。${c} ${valid ? '满足' : '不满足'}这个条件。`);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(31, 77), b = integer(28, 78);
+          return result(`三角形 ABC 中，∠A = ${a}°，∠B = ${b}°。延长 BC 至 D，求外角 ∠ACD 的度数。`, `${a + b}°`,
+            `∠ACD 是 ∠ACB 的邻补角，也等于与它不相邻的两个内角之和，即 ${a}° + ${b}° = ${a + b}°。`, 3);
+        },
+        () => {
+          const a = integer(21, 80), side = integer(5, 31);
+          return result(`已知 △ABC ≌ △DEF，∠B = ${a}°，AC = ${side} 厘米。写出 ∠E 和 DF 的大小。`, `∠E = ${a}°，DF = ${side} 厘米`,
+            `由全等式的书写顺序，B 与 E 对应，AC 与 DF 对应。对应角和对应边分别相等。`);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(6, 17), b = a + integer(1, 7), c = integer(b - a + 1, a + b - 1);
+          return result(`在 △ABC 与 △DEF 中，AB = DE = ${a} 厘米，AC = DF = ${b} 厘米，∠BAC = ∠EDF。若 BC = ${c} 厘米，请说明两个三角形为何全等，并求 EF。`, `△ABC ≌ △DEF，EF = ${c} 厘米`,
+            `AB 与 AC 的夹角等于 DE 与 DF 的夹角，两组对应边也分别相等，按边角边可判定 △ABC ≌ △DEF。因此 EF = BC = ${c} 厘米。`, 4);
+        },
+        () => {
+          const a = integer(8, 22), b = integer(9, 23), d = 180 - 3 * a - b;
+          return result(`三角形的三个内角的度数分别为 x°、(2x + ${b})° 和 ${d}°。求 x 和最大的内角。`,
+            `x = ${a}，最大角 ${Math.max(2 * a + b, d)}°`, `内角和为 180°，列方程 x + 2x + ${b} + ${d} = 180，解得 x = ${a}。三个内角分别为 ${a}°、${2 * a + b}° 和 ${d}°，最大的是 ${Math.max(2 * a + b, d)}°。`, 4);
+        },
+      ],
+    }),
+    topic('g7-isosceles', '等腰三角形', '下册', {
+      basic: [
+        () => {
+          const a = integer(15, 72);
+          return result(`一个等腰三角形的顶角为 ${2 * a}°。它的两个底角各是多少度？`, `各 ${90 - a}°`,
+            `等腰三角形的两个底角相等，两底角之和为 180° − ${2 * a}°，所以各为 ${90 - a}°。`, 1);
+        },
+        () => {
+          const leg = integer(5, 23), base = integer(4, 2 * leg - 1);
+          return result(`一个等腰三角形的腰长为 ${leg} 厘米，底边长为 ${base} 厘米。它的周长是多少厘米？`, `${2 * leg + base} 厘米`,
+            `两腰相等，周长为 ${leg} + ${leg} + ${base} = ${2 * leg + base}（厘米）。`, 1);
+        },
+      ],
+      standard: [
+        () => {
+          const a = integer(4, 26), b = a + integer(2, a - 1);
+          return result(`一个等腰三角形有两条边分别长 ${a} 厘米和 ${b} 厘米。求它所有可能的周长。`, `${2 * a + b} 厘米或 ${a + 2 * b} 厘米`,
+            `当 ${a} 厘米为腰时，${a} + ${a} > ${b}，周长为 ${2 * a + b} 厘米。当 ${b} 厘米为腰时也能组成三角形，周长为 ${a + 2 * b} 厘米。`, 3);
+        },
+        () => {
+          const a = integer(11, 69);
+          return result(`△ABC 中 AB = AC，D 是 BC 的中点。已知 ∠BAC = ${2 * a}°，求 ∠BAD 和 ∠ADB 的度数。`, `∠BAD = ${a}°，∠ADB = 90°`,
+            `等腰三角形底边上的中线也是顶角平分线和底边上的高。因此 ∠BAD = ${2 * a}° ÷ 2 = ${a}°，∠ADB = 90°。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = integer(4, 25), b = 2 * a + integer(0, 8);
+          return result(`一个等腰三角形有两条边分别长 ${a} 厘米和 ${b} 厘米。请判断哪条边长只能作为底边，并求周长。`, `底边长 ${a} 厘米，周长 ${a + 2 * b} 厘米`,
+            `若以 ${a} 厘米作腰，则两腰之和 ${2 * a} 厘米不大于 ${b} 厘米，无法构成三角形。因此 ${b} 厘米为腰、${a} 厘米为底，周长为 ${b} + ${b} + ${a} = ${a + 2 * b} 厘米。`, 4);
+        },
+        () => {
+          const a = integer(10, 68);
+          return result(`△ABC 中 AB = AC，点 D 在 BC 上，AD 平分 ∠BAC。已知 ∠ABC = ${a}°，求 ∠BAD，并说明 AD 与 BC 的位置关系。`, `∠BAD = ${90 - a}°，AD ⟂ BC`,
+            `∠ABC = ∠ACB = ${a}°，所以 ∠BAC = 180° − 2 × ${a}° = ${180 - 2 * a}°，∠BAD = ${90 - a}°。在 △ABD 中，∠ADB = 180° − ${a}° − ${90 - a}° = 90°，故 AD ⟂ BC。`, 4);
+        },
+      ],
+    }),
+  ];
+})();
+
+
+const GRADE_8 = (() => {
+  const randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const pick = (items) => items[randomInt(0, items.length - 1)];
+  const make = (prompt, answer, explanation, lines = 2) => ({ prompt, answer, explanation, lines });
+  const signed = (value) => value < 0 ? `− ${-value}` : `+ ${value}`;
+  const linear = (slope, intercept) => {
+    const x = slope === 1 ? 'x' : slope === -1 ? '−x' : `${slope}x`;
+    return intercept === 0 ? x : `${x} ${signed(intercept)}`;
+  };
+  const fraction = (numerator, denominator) => {
+    let a = Math.abs(numerator), b = Math.abs(denominator);
+    while (b) [a, b] = [b, a % b];
+    const n = numerator / a * Math.sign(denominator), d = Math.abs(denominator) / a;
+    return d === 1 ? String(n) : `${n}/${d}`;
+  };
+  const radical = (coefficient, radicand) => coefficient === 0 ? '0' : coefficient === 1 ? `√${radicand}` : `${coefficient}√${radicand}`;
+  const radicand = () => pick([2, 3, 5, 6, 7, 10, 11, 13, 14, 15]);
+
+  function topic(id, label, term, templates) {
+    return { id, label, term, generate(difficulty) { return { topic: id, ...pick(templates[difficulty])() }; } };
+  }
+
+  function rightTriangle() {
+    // 用互相约束的参数生成勾股数，保证三个长度正好组成直角三角形。
+    const n = randomInt(1, 4), m = n + randomInt(1, 5), scale = randomInt(1, 3);
+    const a = scale * (m * m - n * n), b = scale * 2 * m * n;
+    return [Math.min(a, b), Math.max(a, b), scale * (m * m + n * n)];
+  }
+
+  return [
+    topic('g8-real', '第19章 实数', '上册', {
+      basic: [
+        () => {
+          const a = randomInt(2, 38);
+          return make(`求${a * a}的平方根和算术平方根。`, `平方根是±${a}，算术平方根是${a}。`, `${a}与−${a}的平方都是${a * a}，其中非负的平方根是${a}。`);
+        },
+        () => {
+          const a = randomInt(2, 44) * pick([-1, 1]);
+          return make(`求${a ** 3}的立方根。`, String(a), `${a}的立方等于${a ** 3}，所以所求立方根为${a}。`);
+        },
+      ],
+      standard: [
+        () => {
+          const a = randomInt(2, 30), offset = randomInt(1, 2 * a);
+          const b = a * a + offset;
+          return make(`√${b}介于哪两个相邻的正整数之间？`, `介于${a}和${a + 1}之间。`, `${a}²＝${a * a}＜${b}＜${(a + 1) ** 2}＝${a + 1}²。对三个非负数开算术平方根，大小顺序不变。`);
+        },
+        () => {
+          const a = randomInt(2, 19), b = randomInt(3, 27), d = radicand();
+          return make(`分别指出−${a}/${b}、√${d}、${a}.${b}中哪些是有理数，哪些是无理数。`, `有理数为−${a}/${b}、${a}.${b}，无理数为√${d}。`, `分数和有限小数都是有理数。${d}不是完全平方数，√${d}是无理数。`);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = randomInt(3, 25), b = a * a + randomInt(1, 2 * a);
+          return make(`一个正方形的面积为${b} cm²。求边长的整数部分和小数部分（用根式表示）。`, `整数部分为${a}，小数部分为√${b}−${a}。`, `边长为√${b} cm。${a}²＜${b}＜${a + 1}²，因此整数部分为${a}，原数减去整数部分即得小数部分。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 17), b = a * a + randomInt(1, 2 * a);
+          return make(`求实数x，使得|x|＝√${b}，并判断这两个解中哪个在数轴上离原点更近。`, `x＝±√${b}，两者到原点的距离相同。`, `绝对值表示到原点的距离。数轴上与原点相距√${b}的点分别在原点左、右两侧，故两个解的距离相同。`, 3);
+        },
+      ],
+    }),
+    topic('g8-radicals', '第20章 二次根式', '上册', {
+      basic: [
+        () => {
+          const a = randomInt(2, 12), d = radicand();
+          return make(`化简：√(${a * a * d})。`, radical(a, d), `把根号内的数分解为${a * a}×${d}，开平方可将${a}移出根号。`);
+        },
+        () => {
+          const a = randomInt(2, 14), b = randomInt(2, 17);
+          return make(`计算：√(${a * a}/${b * b})。`, fraction(a, b), `分子和分母分别开算术平方根，得到${a}/${b}，再约分。`);
+        },
+        () => {
+          const a = randomInt(2, 12), b = randomInt(2, 17);
+          return make(`使二次根式√(${a}x−${b})有意义，x应满足什么条件？`, `x≥${fraction(b, a)}`, `被开方数必须非负，所以${a}x−${b}≥0。`);
+        },
+      ],
+      standard: [
+        () => {
+          const a = randomInt(2, 9), b = randomInt(2, 9), d = radicand();
+          return make(`计算：${radical(a, d)}＋√(${b * b * d})。`, radical(a + b, d), `第二项化简为${radical(b, d)}。合并同类二次根式时，根号部分不变，系数相加。`);
+        },
+        () => {
+          const a = randomInt(2, 9), b = randomInt(2, 9), d = radicand();
+          return make(`计算：√(${a * a * d}) × √(${b * b * d})。`, `${a * b * d}`, `先化简为${radical(a, d)}×${radical(b, d)}，再用√${d}×√${d}＝${d}。`);
+        },
+        () => {
+          const a = randomInt(2, 12), b = randomInt(2, 9), d = radicand();
+          return make(`计算：√(${a * a * b * b * d}) ÷ √(${b * b * d})。`, `${a}`, `被除数和除数的被开方数都是正数，将它们相除得到${a * a}，再开算术平方根。`);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = randomInt(2, 8), b = randomInt(2, 9), d = radicand();
+          const term = radical(2 * a * b, d), constant = a * a * d + b * b;
+          return make(`计算：（${radical(a, d)}＋${b}）²。`, `${constant}＋${term}`, `按完全平方公式展开，平方项分别为${a * a * d}和${b * b}，中间项为${term}。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 10), b = randomInt(2, 9), d = radicand();
+          return make(`计算：（${radical(a, d)}＋${b}）（${radical(a, d)}−${b}）。`, `${a * a * d - b * b}`, `由平方差公式，原式等于（${radical(a, d)}）²−${b}²＝${a * a * d}−${b * b}。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 9), b = randomInt(2, 9), d = radicand();
+          const c = randomInt(1, a + b - 1);
+          return make(`计算：（√(${a * a * d})＋√(${b * b * d})−${radical(c, d)}）×√${d}。`, `${(a + b - c) * d}`, `化简括号内的根式并合并同类项，得${radical(a + b - c, d)}。再乘√${d}，得到${a + b - c}×${d}。`, 3);
+        },
+      ],
+    }),
+    topic('g8-quadratic', '第21章 一元二次方程', '上册', {
+      basic: [
+        () => {
+          const a = randomInt(2, 42);
+          return { ...make(`解一元二次方程：x²＝${a * a}。`, `x＝±${a}`, `直接开平方，${a * a}的平方根是${a}和−${a}。`), diagnosisRule: { type: "missing_root", root: a } };
+        },
+        () => {
+          const a = randomInt(2, 17), b = randomInt(2, 23);
+          return make(`解方程：（x＋${a}）（x−${b}）＝0。`, `x＝−${a}或x＝${b}`, `两因式的乘积为0，至少一个因式为0，分别解两个一元一次方程。`);
+        },
+      ],
+      standard: [
+        () => {
+          // 由两个相异根反推系数，生成的方程始终可用因式分解求解。
+          const a = randomInt(2, 16), b = a + randomInt(1, 12);
+          return make(`解一元二次方程：x²−${a + b}x＋${a * b}＝0。`, `x＝${a}或x＝${b}`, `常数项${a * b}＝${a}×${b}，一次项系数是−（${a}＋${b}）。原式可写成（x−${a}）（x−${b}）＝0。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 16), offset = randomInt(-12, 12), b = a * a + offset;
+          const delta = -4 * offset;
+          const result = delta > 0 ? '两个不相等的实数根' : delta === 0 ? '两个相等的实数根' : '无实数根';
+          return make(`利用判别式判断方程x²−${2 * a}x ${signed(b)}＝0的实数根情况。`, `Δ＝${delta}，${result}。`, `代入判别式b²−4ac，得（−${2 * a}）²−4×1×（${b}）＝${delta}，因此${result}。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = randomInt(3, 20), b = randomInt(2, 13), c = a + b;
+          return make(`一块长方形菜地面积为${a * c} m²，长比宽多${b} m。求长和宽。`, `宽${a} m，长${c} m。`, `设宽为x m，长为（x＋${b}）m，列式x（x＋${b}）＝${a * c}。整理为（x−${a}）（x＋${c}）＝0。由于宽为正，取x＝${a}。`, 4);
+        },
+        () => {
+          const a = randomInt(2, 18), b = a + randomInt(2, 9);
+          return make(`已知${a}是一元二次方程x²−${a + b}x＋m＝0的一个根。利用根与系数的关系求另一个根和m。`, `另一个根为${b}，m＝${a * b}。`, `两根之和为${a + b}，另一个根为${a + b}−${a}＝${b}。两根之积为m，所以m＝${a}×${b}＝${a * b}。`, 3);
+        },
+      ],
+    }),
+    topic('g8-pythagoras', '第22章 直角三角形', '上册', {
+      basic: [
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`直角三角形的两条直角边分别长${a} cm和${b} cm。求斜边长。`, `${c} cm`, `斜边平方为${a}²＋${b}²＝${c * c}，取正平方根得${c} cm。`);
+        },
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`直角三角形斜边长${c} cm，其中一条直角边长${a} cm。求另一条直角边长。`, `${b} cm`, `另一条直角边的平方为${c}²−${a}²＝${b * b}，取正平方根得${b} cm。`);
+        },
+        () => {
+          const a = randomInt(12, 78);
+          return make(`直角三角形的一个锐角是${a}°，求另一个锐角。`, `${90 - a}°`, `直角三角形的两个锐角互余，另一个锐角为90°−${a}°＝${90 - a}°。`);
+        },
+      ],
+      standard: [
+        () => {
+          const [a, b, c] = rightTriangle();
+          const side = c + randomInt(0, 1);
+          const right = side === c;
+          return make(`一个三角形的三边长分别为${a}、${b}和${side}。判断它是不是直角三角形，并说明理由。`, right ? '是直角三角形。' : '不是直角三角形。', `比较最长边的平方${side * side}和另外两边的平方和${a * a + b * b}。两者${right ? '相等，由勾股定理的逆定理可知是' : '不相等，因此不是'}直角三角形。`, 3);
+        },
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`一块长方形木板的长为${b} cm，宽为${a} cm。沿对角线锯开，锯缝的长度是多少？`, `${c} cm`, `木板的长和宽互相垂直，对角线是斜边。由勾股定理得对角线长为√(${b}²＋${a}²)＝${c} cm。`, 3);
+        },
+        () => {
+          const a = randomInt(6, 26), b = randomInt(1, a - 2);
+          return make(`P在∠AOB的角平分线上。P到OA的距离为${a} cm。如果P到OB的距离表示为（x＋${b}）cm，求x。`, `x＝${a - b}`, `角平分线上的点到角的两边距离相等，所以x＋${b}＝${a}，解得x＝${a - b}。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`一个长方形的对角线长${c} cm，长边长${b} cm。求它的周长和面积。`, `周长${2 * (a + b)} cm，面积${a * b} cm²。`, `由勾股定理得短边√(${c}²−${b}²)＝${a} cm。周长为2（${b}＋${a}），面积为${b}×${a}。`, 3);
+        },
+        () => {
+          const [a, b, c] = rightTriangle();
+          const dx = randomInt(1, a - 1), dy = randomInt(1, b - 1);
+          return make(`从起点向东走${dx} m，再向北走${dy} m，然后向东走${a - dx} m，最后向北走${b - dy} m到达终点。步行总路程比起终点的直线距离长多少？`, `${a + b - c} m`, `总向东${a} m，总向北${b} m，路程为${a + b} m。东、北互相垂直，直线距离为√(${a}²＋${b}²)＝${c} m，差为${a + b - c} m。`, 4);
+        },
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`直角三角形ABC和ADC位于AC两侧，∠ABC＝∠ADC＝90°，AB＝AD＝${a} cm，AC＝${c} cm。证明两三角形全等，并求DC。`, `△ABC≌△ADC，DC＝${b} cm。`, `AC是两直角三角形的公共斜边，且AB＝AD，依据斜边、直角边（HL）判定全等。DC＝BC＝√(${c}²−${a}²)＝${b} cm。`, 4);
+        },
+      ],
+    }),
+    topic('g8-quadrilaterals', '第23章 四边形', '下册', {
+      basic: [
+        () => {
+          const a = randomInt(4, 33), b = randomInt(4, 35);
+          return make(`平行四边形相邻两边分别为${a} cm、${b} cm，求周长。`, `${2 * (a + b)} cm`, `两组对边分别相等，周长为2（${a}＋${b}）＝${2 * (a + b)} cm。`);
+        },
+        () => {
+          const a = randomInt(38, 143);
+          return make(`在平行四边形ABCD中，∠A＝${a}°。求∠B与∠C。`, `∠B＝${180 - a}°，∠C＝${a}°。`, '平行四边形相邻两个角互补，对角相等。');
+        },
+      ],
+      standard: [
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`菱形的两条对角线分别为${2 * a} cm和${2 * b} cm，求边长。`, `${c} cm`, `菱形对角线互相垂直平分，半长${a} cm、${b} cm组成直角三角形的两直角边。边长为√(${a}²＋${b}²)＝${c} cm。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 35);
+          return make(`在△ABC中，D、E分别为AB、AC的中点，DE＝${a} cm。求BC，并判断DE与BC的位置关系。`, `BC＝${2 * a} cm，DE∥BC。`, 'DE是三角形的中位线。三角形中位线平行于第三边，且等于第三边的一半。', 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`平行四边形ABCD中，AC＝BD＝${c} cm，AB＝${a} cm。判断它是哪一种特殊平行四边形，并求周长。`, `矩形，周长${2 * (a + b)} cm。`, `对角线相等的平行四边形是矩形，所以∠ABC＝90°。由勾股定理得BC＝√(${c}²−${a}²)＝${b} cm。周长为2（${a}＋${b}）＝${2 * (a + b)} cm。`, 4);
+        },
+        () => {
+          const [a, b, c] = rightTriangle();
+          return make(`菱形ABCD的边长为${c} cm，对角线AC长${2 * a} cm。求另一条对角线BD及菱形面积。`, `BD＝${2 * b} cm，面积为${2 * a * b} cm²。`, `两条对角线垂直平分。AC的一半为${a} cm，勾股定理得到BD的一半为${b} cm。面积为两条对角线乘积的一半。`, 4);
+        },
+      ],
+    }),
+    topic('g8-coordinates', '第24章 平面直角坐标系', '下册', {
+      basic: [
+        () => {
+          const x = randomInt(1, 14) * pick([-1, 1]), y = randomInt(1, 15) * pick([-1, 1]);
+          const quadrant = x > 0 ? (y > 0 ? '一' : '四') : (y > 0 ? '二' : '三');
+          return make(`点P(${x}, ${y})在第几象限？`, `第${quadrant}象限。`, `横坐标${x > 0 ? '为正' : '为负'}，纵坐标${y > 0 ? '为正' : '为负'}，符合第${quadrant}象限的符号特征。`);
+        },
+        () => {
+          const x = randomInt(-12, 13), y = randomInt(-12, 13), a = randomInt(1, 9), b = randomInt(1, 9);
+          return make(`点A(${x}, ${y})先向左平移${a}个单位，再向上平移${b}个单位。求平移后点的坐标。`, `(${x - a}, ${y + b})`, `向左使横坐标减${a}，向上使纵坐标加${b}。`);
+        },
+      ],
+      standard: [
+        () => {
+          const [a, b, c] = rightTriangle(), x = randomInt(-9, 9), y = randomInt(-9, 9);
+          return make(`平面直角坐标系中，A(${x}, ${y})，B(${x + a}, ${y + b})。求AB。`, String(c), `两点间横、纵坐标差分别为${a}和${b}。由两点间距离公式得AB＝√(${a}²＋${b}²)＝${c}。`, 3);
+        },
+        () => {
+          const x = randomInt(1, 15), y = randomInt(-15, 15), a = randomInt(1, 12), b = randomInt(1, 12);
+          return make(`将点A(${x}, ${y})先关于y轴对称，再向右平移${a}个单位、向下平移${b}个单位。求最后得到的点。`, `(${a - x}, ${y - b})`, `关于y轴对称得到(−${x}, ${y})。再把横坐标加${a}、纵坐标减${b}。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const [a, b, c] = rightTriangle(), x = randomInt(-14, 14);
+          return make(`已知A(${x}, ${b})，点P在x轴上，AP＝${c}。求所有符合条件的点P。`, `(${x - a}, 0)或(${x + a}, 0)`, `设P(t, 0)，由距离公式得(t−(${x}))²＋${b}²＝${c}²，故(t−(${x}))²＝${a * a}。取正、负两个平方根得到两个坐标。`, 4);
+        },
+        () => {
+          const [a, b, c] = rightTriangle(), x = randomInt(-10, 10), y = randomInt(1, 10);
+          return make(`点A(${x}, ${y})关于x轴的对称点为B。将A向右平移${a}个单位，再将纵坐标改为${b - y}，得到C。求BC。`, String(c), `B的坐标为(${x}, ${-y})，C的坐标为(${x + a}, ${b - y})。横坐标差${a}，纵坐标差${b}，距离为√(${a}²＋${b}²)＝${c}。`, 4);
+        },
+      ],
+    }),
+    topic('g8-linear', '第25章 一次函数', '下册', {
+      basic: [
+        () => {
+          const k = randomInt(2, 12), b = randomInt(-15, 15), x = randomInt(-8, 10);
+          return make(`在一次函数y＝${linear(k, b)}中，当x＝${x}时，求y。`, `y＝${k * x + b}`, `将x＝${x}代入，y＝${k}×（${x}）${signed(b)}＝${k * x + b}。`);
+        },
+        () => {
+          const k = randomInt(2, 17) * pick([-1, 1]), b = randomInt(-15, 15);
+          return make(`一次函数y＝${linear(k, b)}的y随x的增大怎样变化？写出图象与y轴的交点。`, `y随x增大而${k > 0 ? '增大' : '减小'}，交点为(0, ${b})。`, `一次项系数${k}${k > 0 ? '大于' : '小于'}0。与y轴交点的横坐标为0，代入得纵坐标为${b}。`);
+        },
+      ],
+      standard: [
+        () => {
+          const k = randomInt(2, 11) * pick([-1, 1]), b = randomInt(-12, 12);
+          const x1 = randomInt(-6, 5), x2 = x1 + randomInt(2, 7), y1 = k * x1 + b, y2 = k * x2 + b;
+          return make(`一次函数的图象经过点(${x1}, ${y1})和(${x2}, ${y2})。求函数解析式。`, `y＝${linear(k, b)}`, `设y＝kx＋b。由两点的纵坐标之差除以横坐标之差，得k＝(${y2}−(${y1}))/(${x2}−(${x1}))＝${k}。代入第一点得b＝${b}。`, 3);
+        },
+        () => {
+          const k = randomInt(2, 12), b = randomInt(2, 9), c = randomInt(10, 18), x = randomInt(-8, 10);
+          const y = k * x + c;
+          return make(`直线l平行于y＝${linear(k, b)}的图象，并经过点(${x}, ${y})。求直线l的解析式。`, `y＝${linear(k, c)}`, `平行直线的斜率相等，故设l为y＝${k}x＋b。代入已知点，b＝${y}−${k}×(${x})＝${c}。`, 3);
+        },
+        () => {
+          const a = randomInt(3, 16), b = randomInt(2, 15), c = randomInt(2, 9);
+          return make(`某场馆的团体票按“每单固定收取${a}元，再按每人${b}元”收费。设人数为x，总费用为y。写出y与x的关系式，并求${c}人时的费用。`, `y＝${linear(b, a)}，${c}人时为${a + b * c}元。`, `每人的费用乘人数，再加固定费用，得y＝${b}x＋${a}。将x＝${c}代入即可。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const a = randomInt(2, 12), b = randomInt(2, 12), x = randomInt(2, 28);
+          // 先确定交点，再反推两种方案的固定费用，保证人数阈值为正整数。
+          const extra = randomInt(2, 8), c = a + extra * x;
+          return make(`活动用车有两种计费方式。甲收${a}元固定费，再收每人${b + extra}元。乙收${c}元固定费，再收每人${b}元。人数为正整数，问多少人时两种方式同价，什么情况下甲更便宜？`, `${x}人时同价，少于${x}人时甲更便宜。`, `设人数为t，两种费用相减为${extra}t−${extra * x}。差为0时t＝${x}，差小于0时t＜${x}。`, 4);
+        },
+        () => {
+          const k = randomInt(2, 9), x = randomInt(2, 18), b = k * x;
+          return make(`直线y＝−${k}x＋${b}与x轴、y轴分别交于A、B，O是原点。求△AOB的面积。`, `${b * x / 2}`, `令y＝0得A(${x}, 0)，令x＝0得B(0, ${b})。OA与OB垂直，面积为${x}×${b}÷2＝${b * x / 2}。`, 3);
+        },
+        () => {
+          const k1 = randomInt(2, 8), k2 = k1 + randomInt(2, 7), x = randomInt(2, 18), y = randomInt(3, 24);
+          const b1 = y - k1 * x, b2 = y - k2 * x;
+          return make(`两条直线y＝${linear(k1, b1)}与y＝${linear(k2, b2)}相交。求交点，并写出第一条直线位于第二条直线上方时x的范围。`, `交点(${x}, ${y})，上方对应x＜${x}。`, `令两式相等，得${k2 - k1}x＝${b1 - b2}，所以x＝${x}。代入得y＝${y}。第一式减第二式得−${k2 - k1}x＋${b1 - b2}，它大于0当且仅当x＜${x}。`, 4);
+        },
+      ],
+    }),
+    topic('g8-inverse', '第26章 反比例函数', '下册', {
+      basic: [
+        () => {
+          const x = randomInt(2, 12), y = randomInt(2, 22) * pick([-1, 1]);
+          return make(`反比例函数y＝${x * y}/x中，当x＝${x}时，求y。`, `y＝${y}`, `代入x＝${x}，得y＝${x * y}÷${x}＝${y}。`);
+        },
+        () => {
+          const k = randomInt(2, 34) * pick([-1, 1]);
+          return make(`反比例函数y＝${k}/x的图像在哪两个象限？`, k > 0 ? '第一、三象限。' : '第二、四象限。', `由xy＝${k}，x与y${k > 0 ? '同号，因此图像在第一、三象限' : '异号，因此图像在第二、四象限'}。`);
+        },
+      ],
+      standard: [
+        () => {
+          const x = randomInt(2, 12), y = randomInt(2, 15) * pick([-1, 1]), x2 = x + randomInt(1, 9);
+          return make(`反比例函数经过点(${x}, ${y})。求它的解析式以及x＝${x2}时y的值。`, `y＝${x * y}/x，x＝${x2}时y＝${fraction(x * y, x2)}。`, `设y＝k/x，则k＝xy＝${x}×（${y}）＝${x * y}。再代入x＝${x2}计算。`, 3);
+        },
+        () => {
+          const a = randomInt(2, 14), b = a + randomInt(2, 12), k = randomInt(2, 40);
+          return make(`P(${a}, y₁)和Q(${b}, y₂)均在反比例函数y＝${k}/x的图像上，比较y₁与y₂。`, 'y₁＞y₂。', `${k}＞0。在第一象限的同一支图像上，y随x增大而减小。由于${a}＜${b}，故y₁＞y₂。`, 3);
+        },
+      ],
+      advanced: [
+        () => {
+          const width = randomInt(2, 11), length = width + randomInt(4, 16);
+          const area = width * length, limit = width + randomInt(1, length - width - 1);
+          return make(`面积固定为${area} m²的长方形场地，相邻两边长分别记为x m与y m。写出y关于x的函数关系，并求y不超过${limit} m时x的取值范围。`, `y＝${area}/x（x＞0），x≥${fraction(area, limit)}。`, `由面积公式xy＝${area}得y＝${area}/x。因x为正，可在${area}/x≤${limit}的两边乘x，再除以${limit}。`, 4);
+        },
+        () => {
+          const a = randomInt(2, 18), b = randomInt(2, 17), x = a + randomInt(2, 9);
+          const area = a * b;
+          return make(`反比例函数的图像经过A(${a}, ${b})。点B在该图像上，横坐标为${x}。由B向x轴作垂线，垂足为C，O为原点。求B的坐标和△BOC的面积。`, `B(${x}, ${fraction(area, x)})，面积为${fraction(area, 2)}。`, `xy＝${a}×${b}＝${area}，故B的纵坐标为${fraction(area, x)}。OC与BC分别为横、纵坐标，因此面积为xy/2＝${fraction(area, 2)}。`, 4);
+        },
+      ],
+    }),
+  ];
+})();
+
+
+const GRADE_9 = (() => {
+  const random = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const pick = items => items[random(0, items.length - 1)];
+  const item = (prompt, answer, explanation, lines = 3) => ({ prompt, answer, explanation, lines });
+
+  function gcd(a, b) {
+    while (b !== 0) [a, b] = [b, a % b];
+    return Math.abs(a);
+  }
+
+  function fraction(numerator, denominator) {
+    const divisor = gcd(numerator, denominator);
+    return denominator / divisor === 1 ? String(numerator / divisor) : `${numerator / divisor}/${denominator / divisor}`;
+  }
+
+  function term(value, symbol = '') {
+    if (value === 0) return '';
+    const magnitude = Math.abs(value);
+    const coefficient = magnitude === 1 && symbol ? '' : magnitude;
+    return ` ${value < 0 ? '−' : '+'} ${coefficient}${symbol}`;
+  }
+
+  function factor(root) {
+    return root === 0 ? 'x' : `（x${term(-root)}）`;
+  }
+
+  function distinctRoots() {
+    const first = pick([-1, 1]) * random(1, 15);
+    const second = first + random(1, 12);
+    return [first, second];
+  }
+
+  function topic(id, label, term, levels) {
+    // 难度对应不同解题步骤，模板内变换参数以生成足量的同类题。
+    return {
+      id, label, term,
+      generate(difficulty) {
+        return { topic: id, ...pick(levels[difficulty])() };
+      },
+    };
+  }
+
+  function intersectionQuestion() {
+    const [a, b] = distinctRoots();
+    const scale = pick([-3, -2, 1, 2, 3]);
+    return {
+      ...item(`求抛物线 y = ${scale}${factor(a)}${factor(b)} 与 x 轴的交点及对称轴。`, `交点（${a}，0）、（${b}，0），对称轴 x = ${(a + b) / 2}`, `令 y = 0，得 x = ${a} 或 x = ${b}。两交点关于对称轴对称，所以对称轴横坐标为（${a} +（${b}））÷ 2 = ${(a + b) / 2}。`),
+      graph: { a: scale, b: -scale * (a + b), c: scale * a * b, xMin: Math.min(a, b) - 1, xMax: Math.max(a, b) + 1 },
+    };
+  }
+
+  function maximumHeightQuestion() {
+    const a = random(2, 6);
+    const h = random(2, 7);
+    const max = a * h ** 2 + random(2, 12);
+    return item(`某物体离地高度 h（单位 m）与抛出后时间 t（单位 s）的关系为 h = −${a}t² + ${2 * a * h}t${term(max - a * h ** 2)}。只考虑 0 ≤ t ≤ ${h + 2}，求最大高度及达到最大高度的时间。`, `${h} s 时达到最大高度 ${max} m`, `配方得 h = −${a}（t − ${h}）² + ${max}。平方项非负且系数为负，t = ${h} 在给定范围内，此时高度最大，为 ${max} m。`, 4);
+  }
+
+  // 讲评前后都从二次函数题库取题。用整数零点构造情境，保证定义域内只有一个落地时间。
+  function flightQuestion(peakTime = random(2, 5), beforeLaunch = random(1, 3)) {
+    const landing = 2 * peakTime + beforeLaunch;
+    const initial = landing * beforeLaunch;
+    const height = initial + peakTime ** 2;
+    return {
+      ...item(`小球抛出后 t 秒的离地高度为 h = −t² + ${2 * peakTime}t + ${initial}（米），从抛出算起。求小球何时到达最高点、何时落地，分别说明理由。`,
+        `${peakTime} 秒时最高，${landing} 秒时落地。`,
+        `配方得 h = −（t − ${peakTime}）² + ${height}，所以 t = ${peakTime} 时最高。令 h = 0，解得 t = ${landing} 或 t = −${beforeLaunch}。抛出后 t ≥ 0，所以落地时间为 ${landing} 秒。`, 4),
+      graph: { a: -1, b: 2 * peakTime, c: initial, xMin: 0, xMax: landing, xLabel: "t（秒）", yLabel: "h（米）" },
+    };
+  }
+
+  const functions = topic('quadratic-functions', '第27章 二次函数', '上册', {
+    basic: [
+      () => {
+        const a = pick([-3, -2, -1, 1, 2, 3]);
+        const h = random(-9, 9);
+        const k = random(-20, 20);
+        return item(`写出抛物线 y = ${a}${factor(h)}²${term(k)} 的顶点坐标和对称轴。`, `顶点（${h}，${k}），对称轴 x = ${h}`, `把式子与顶点式 y = a（x − h）² + k 比较，顶点为（h，k），对称轴为 x = h。`, 2);
+      },
+      () => {
+        const a = pick([-3, -2, -1, 1, 2, 3]);
+        const h = random(-7, 7);
+        const k = random(-14, 14);
+        const x = h + pick([-1, 1]) * random(1, 6);
+        const y = a * (x - h) ** 2 + k;
+        return item(`已知 y = ${a}${factor(h)}²${term(k)}，当 x = ${x} 时，求 y。`, `y = ${y}`, `代入 x = ${x}，得到 y = ${a} × （${x} −（${h}））² + （${k}）= ${y}。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const a = pick([-3, -2, -1, 1, 2, 3]);
+        const h = pick([-1, 1]) * random(1, 9);
+        const k = random(-20, 20);
+        return item(`用配方法求抛物线 y = ${a}x²${term(-2 * a * h, 'x')}${term(a * h ** 2 + k)} 的顶点坐标，并说明开口方向。`, `顶点（${h}，${k}），开口向${a > 0 ? '上' : '下'}`, `提取二次项系数并配方，得到 y = ${a}${factor(h)}²${term(k)}。顶点为（${h}，${k}）；二次项系数${a > 0 ? '为正，开口向上' : '为负，开口向下'}。`);
+      },
+      intersectionQuestion,
+    ],
+    advanced: [
+      maximumHeightQuestion,
+      () => {
+        const a = pick([-3, -2, 1, 2, 3]);
+        const h = random(-6, 6);
+        const k = random(-12, 12);
+        const offset = pick([-1, 1]) * random(2, 5);
+        return item(`一条抛物线的顶点是（${h}，${k}），且经过点（${h + offset}，${a * offset ** 2 + k}）。求它的解析式。`, `y = ${a}${factor(h)}²${term(k)}`, `设 y = a${factor(h)}²${term(k)}。代入点（${h + offset}，${a * offset ** 2 + k}），得 ${a * offset ** 2 + k} = ${offset ** 2}a +（${k}），解得 a = ${a}。`, 4);
+      },
+    ],
+  });
+  functions.diagnosis = {
+    flight: { level: "advanced", generate: flightQuestion, example: () => flightQuestion(3, 1) },
+    intersection: { level: "standard", generate: intersectionQuestion },
+  };
+
+  const circles = topic('circle-geometry', '第31章 圆', '下册', {
+    basic: [
+      () => {
+        const radius = random(2, 35);
+        const angle = pick([30, 45, 60, 90, 120, 135, 150, 180]);
+        return item(`一个半径为 ${radius} cm 的圆中，${angle}° 的圆心角所对的弧长是多少？结果保留 π。`, `${fraction(radius * angle, 180)}π cm`, `整圆的周长是 2πr，弧长占周长的 ${angle}/360，所以弧长为 ${angle}/360 × 2π × ${radius} = ${fraction(radius * angle, 180)}π cm。`, 2);
+      },
+      () => {
+        const angle = 2 * random(12, 80);
+        return item(`在圆 O 中，劣弧 AB 所对的圆心角 ∠AOB = ${angle}°。点 C 在优弧 AB 上，求 ∠ACB。`, `${angle / 2}°`, `∠ACB 和 ∠AOB 对应同一条劣弧 AB，同弧所对的圆周角等于圆心角的一半。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const radius = random(3, 20);
+        const angle = pick([30, 45, 60, 90, 120, 135, 150]);
+        return item(`一个扇形的半径是 ${radius} cm，圆心角是 ${angle}°。求弧长及面积，结果保留 π。`, `弧长 ${fraction(radius * angle, 180)}π cm，面积 ${fraction(radius ** 2 * angle, 360)}π cm²`, `扇形占整圆的 ${angle}/360。弧长 = ${angle}/360 × 2π × ${radius}，面积 = ${angle}/360 × π × ${radius}²。`);
+      },
+      () => {
+        const scale = random(1, 12);
+        const [half, distance, radius] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17]]).map(value => value * scale);
+        return item(`圆 O 的半径为 ${radius} cm，弦 AB 到圆心的距离是 ${distance} cm。求弦 AB 的长度。`, `${2 * half} cm`, `过 O 作 AB 的垂线，垂足为 M，则 M 是弦的中点。在直角三角形 OMA 中，AM = √（${radius}² − ${distance}²）= ${half} cm，所以 AB = ${2 * half} cm。`);
+      },
+      () => {
+        const n = pick([3, 4, 5, 6, 8, 9, 10, 12]);
+        const radius = random(3, 25);
+        return item(`圆内接正 ${n} 边形的外接圆半径为 ${radius} cm。求相邻两个顶点所对的较小圆心角和对应的弧长，弧长结果保留 π。`, `圆心角 ${360 / n}°，弧长 ${fraction(2 * radius, n)}π cm`, `正 ${n} 边形的顶点把圆周等分为 ${n} 段。每段圆心角为 360° ÷ ${n}，弧长为 2π × ${radius} ÷ ${n}。`);
+      },
+    ],
+    advanced: [
+      () => {
+        const scale = random(1, 15);
+        const [radius, tangent, distance] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17]]).map(value => value * scale);
+        return item(`从圆 O 外一点 P 作两条切线 PA、PB。圆的半径为 ${radius} cm，OP = ${distance} cm。求四边形 OAPB 的周长和面积。`, `周长 ${2 * (radius + tangent)} cm，面积 ${radius * tangent} cm²`, `半径垂直切线，PA = √（${distance}² − ${radius}²）= ${tangent} cm。两条切线长度相等，周长为 2 ×（${radius} + ${tangent}）；两个直角三角形面积之和为 ${radius} × ${tangent}。`, 4);
+      },
+      () => {
+        const radius = random(3, 26);
+        const angle = pick([90, 180, 270]);
+        const arc = fraction(radius * angle, 180);
+        return item(`把半径 ${radius} cm、圆心角 ${angle}° 的扇形卷成一个圆锥的侧面（无重叠）。求底面半径和侧面积，面积保留 π。`, `底面半径 ${fraction(radius * angle, 360)} cm，侧面积 ${fraction(radius ** 2 * angle, 360)}π cm²`, `扇形弧长为 ${arc}π cm，即圆锥底面周长。除以 2π 得底面半径 ${fraction(radius * angle, 360)} cm。侧面积就是扇形面积，即 ${angle}/360 × π × ${radius}²。`, 4);
+      },
+    ],
+  });
+
+  const similarity = topic('triangle-similarity', '第28章 相似三角形', '上册', {
+    basic: [
+      () => {
+        const a = random(3, 15);
+        const scale = random(2, 7);
+        const b = random(4, 22);
+        return item(`两个相似三角形的一对对应边分别长 ${a} cm 和 ${a * scale} cm。若较小三角形的另一边长 ${b} cm，求较大三角形中对应边的长度。`, `${b * scale} cm`, `较大三角形到较小三角形的对应边长度之比为 ${a * scale} ÷ ${a} = ${scale}，所以所求边长为 ${b} × ${scale} = ${b * scale} cm。`, 2);
+      },
+      () => {
+        const perimeter = random(14, 36);
+        const factor = random(2, 8);
+        return item(`两个相似三角形的相似比（较小∶较大）是 1∶${factor}。较小三角形周长为 ${perimeter} cm，求较大三角形的周长。`, `${perimeter * factor} cm`, `相似三角形的周长比等于相似比，所以较大三角形的周长为 ${perimeter} × ${factor} = ${perimeter * factor} cm。`, 2);
+      },
+      () => {
+        const n = random(3, 9);
+        const k = random(2, 9);
+        const p = random(14, 48);
+        return item(`两个相似的 ${n} 边形的对应边长之比（小图形∶大图形）为 1∶${k}，小图形的周长为 ${p} cm。求大图形的周长。`, `${p * k} cm`, `每条对应边都放大 ${k} 倍，周长也放大 ${k} 倍，所以是 ${p} × ${k} = ${p * k} cm。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const smaller = random(2, 7);
+        const larger = smaller + random(1, 6);
+        const unit = random(2, 12);
+        return item(`两个相似三角形的对应边长之比（较小∶较大）是 ${smaller}∶${larger}。较大三角形的面积为 ${larger ** 2 * unit} cm²，求较小三角形的面积。`, `${smaller ** 2 * unit} cm²`, `相似三角形的面积比等于相似比的平方，所以较小三角形的面积为 ${larger ** 2 * unit} ×（${smaller}/${larger}）² = ${smaller ** 2 * unit} cm²。`);
+      },
+      () => {
+        const n = random(2, 10);
+        const m = n + random(1, 8);
+        const a = random(2, 9);
+        const b = random(2, 9);
+        return item(`在△ABC中，D、E分别在 AB、AC 上，DE∥BC。若 AD = ${a * n} cm、AB = ${a * m} cm、AC = ${b * m} cm，求 AE。`, `${b * n} cm`, `由 DE∥BC 得△ADE∽△ABC，所以 AE/AC = AD/AB = ${a * n}/${a * m}。因此 AE = ${b * m} × ${a * n}/${a * m} = ${b * n} cm。`);
+      },
+      () => {
+        const x = random(1, 12);
+        const y = random(1, 14);
+        const k = random(2, 7);
+        const a = random(2, 11);
+        const b = random(2, 11);
+        return item(`以原点 O 为位似中心，把点 A（${x}，${-y}）和 B（${a}，${b}）按相似比 ${k}∶1 放大，A′、B′ 分别与 A、B 在同一条以 O 为端点的射线上。写出 A′、B′ 的坐标。`, `A′（${x * k}，${-y * k}），B′（${a * k}，${b * k}）`, `同侧位似放大 ${k} 倍后，从原点出发的横、纵位移分别乘 ${k}。因此两点的横、纵坐标都乘 ${k}。`);
+      },
+    ],
+    advanced: [
+      () => {
+        const n = random(2, 8);
+        const m = n + random(1, 6);
+        const k = random(2, 11);
+        const smallArea = n ** 2 * k;
+        const whole = m ** 2 * k;
+        return item(`在△ABC中，D、E分别在 AB、AC 上，DE∥BC，且 AD∶DB = ${n}∶${m - n}。四边形 DBCE 的面积为 ${whole - smallArea} cm²。求△ADE与△ABC的面积。`, `△ADE 为 ${smallArea} cm²，△ABC 为 ${whole} cm²`, `△ADE∽△ABC，AD∶AB = ${n}∶${m}，故面积比为 ${n ** 2}∶${m ** 2}。四边形面积对应 ${m ** 2 - n ** 2} 份，每份为 ${k} cm²，两三角形的面积分别为 ${smallArea} cm²、${whole} cm²。`, 4);
+      },
+      () => {
+        const pole = random(2, 8);
+        const shadow = random(3, 11);
+        const factor = random(2, 7);
+        const walk = random(3, 17);
+        const total = shadow * factor + walk;
+        return item(`同一时刻，一根 ${pole} m 高的直杆影长 ${shadow} m。校园内旗杆和直杆竖立在同一水平地面上，沿旗杆影子从影端朝旗杆走 ${walk} m 后，离旗杆底部还剩 ${total - walk} m。求旗杆高度。`, `${fraction(total * pole, shadow)} m`, `旗杆影长为 ${walk} + ${total - walk} = ${total} m。两杆与各自影子构成相似直角三角形，高与影长的比相同。旗杆高度为 ${total} × ${pole}/${shadow} = ${fraction(total * pole, shadow)} m。`, 4);
+      },
+    ],
+  });
+
+  const trig = topic('right-triangle-trig', '第29章 三角初步', '上册', {
+    basic: [
+      () => {
+        const scale = random(1, 18);
+        const [a, b, c] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25]]).map(value => value * scale);
+        return item(`在直角三角形 ABC 中，∠C = 90°，BC = ${a}，AC = ${b}，AB = ${c}。求 sin A 与 cos A。`, `sin A = ${fraction(a, c)}，cos A = ${fraction(b, c)}`, `对于 ∠A，对边为 BC，邻边为 AC，斜边为 AB。正弦等于对边除以斜边，余弦等于邻边除以斜边。`, 2);
+      },
+      () => {
+        const scale = random(1, 20);
+        const [a, b] = pick([[3, 4], [5, 12], [8, 15], [7, 24]]).map(value => value * scale);
+        return item(`在直角三角形 ABC 中，∠C = 90°，BC = ${a}，AC = ${b}。求 tan A 和 tan B。`, `tan A = ${fraction(a, b)}，tan B = ${fraction(b, a)}`, `正切等于对边与邻边的比值。对 ∠A 用 BC/AC；对 ∠B 用 AC/BC。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const length = 2 * random(5, 39);
+        return item(`一把长 ${length} dm 的梯子靠墙，梯子与水平地面的夹角为 30°。墙与地面垂直，求梯子顶端离地面的高度。`, `${length / 2} dm`, `高度是 30° 角的对边，梯长是斜边。因为 sin 30° = 1/2，所以高度为 ${length} × 1/2 = ${length / 2} dm。`);
+      },
+      () => {
+        const distance = random(8, 58);
+        const eyeHeight = random(12, 19) / 10;
+        return item(`一位同学的眼睛离水平地面 ${eyeHeight} m，站在离塔底 ${distance} m 的位置，测得塔顶仰角为 45°。求塔高。`, `${distance + eyeHeight} m`, `因为 tan 45° = 1，塔顶比眼睛高 ${distance} × 1 = ${distance} m。再加眼高 ${eyeHeight} m，塔高为 ${distance + eyeHeight} m。`);
+      },
+    ],
+    advanced: [
+      () => {
+        const scale = random(3, 24);
+        const [rise, run] = pick([[3, 4], [4, 3], [5, 12], [8, 15]]).map(value => value * scale);
+        const eyeHeight = random(13, 19) / 10;
+        return item(`测量员眼高 ${eyeHeight} m，在水平地面上从 A 沿直线朝塔底走了 ${run} m 到 B。在 A、B 两处测得塔顶仰角的正切分别为 ${fraction(rise, run * 2)} 与 ${fraction(rise, run)}。求塔高和 B 到塔底的距离。`, `塔高 ${rise + eyeHeight} m，B 到塔底 ${run} m`, `设 B 到塔底为 x m，塔顶高出眼睛 H m，则 H/x = ${fraction(rise, run)}，H/（x + ${run}）= ${fraction(rise, run * 2)}。两式联立得 x = ${run}、H = ${rise}，塔高为 H + ${eyeHeight} = ${rise + eyeHeight} m。`, 4);
+      },
+      () => {
+        const scale = random(2, 26);
+        const [rise, run, length] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17]]).map(value => value * scale);
+        return item(`从水平地面到平台铺设直坡道，水平距离 ${run} m、坡道长 ${length} m。求平台高度和坡道倾角的正切值。若把平台再升高 ${scale} m，水平距离保持不变，新坡度（竖直高度∶水平距离）是多少？`, `平台高 ${rise} m，正切值 ${fraction(rise, run)}，新坡度 ${fraction(rise + scale, run).replace('/', '∶')}${(rise + scale) % run === 0 ? '∶1' : ''}`, `由勾股定理，高度 = √（${length}² − ${run}²）= ${rise} m；正切为 ${rise}/${run}。升高后坡度为 ${rise + scale}∶${run}，将两项约分。`, 4);
+      },
+    ],
+  });
+
+  const probability = topic('probability', '第33章 随机事件的概率', '下册', {
+    basic: [
+      () => {
+        const red = random(1, 12);
+        const blue = random(1, 12);
+        const white = random(1, 12);
+        return item(`袋中装有 ${red} 个红球、${blue} 个蓝球和 ${white} 个白球。球除颜色外完全相同，随机摸出 1 个球，摸到红球的概率是多少？`, fraction(red, red + blue + white), `共有 ${red + blue + white} 个等可能结果，其中 ${red} 个是红球，所以概率为 ${red}/${red + blue + white}，约分得 ${fraction(red, red + blue + white)}。`, 2);
+      },
+      () => {
+        const upper = random(10, 65);
+        const divisor = random(2, 8);
+        const count = Math.floor(upper / divisor);
+        return item(`有 ${upper} 张大小相同的卡片，分别标有整数 1 到 ${upper}。随机抽取一张，号码恰好是 ${divisor} 的倍数的概率是多少？`, fraction(count, upper), `共有 ${upper} 个等可能结果。号码为 ${divisor} 的倍数的卡片有 ${count} 张，所以概率为 ${fraction(count, upper)}。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const a = random(2, 12);
+        const b = random(2, 12);
+        const total = a + b;
+        return item(`袋中有 ${a} 个红球和 ${b} 个蓝球，除颜色外均相同。随机摸 1 球，放回并混匀后再摸 1 球。两次均摸到红球的概率是多少？`, fraction(a ** 2, total ** 2), `每次摸红球的概率都是 ${a}/${total}。由于放回，两次结果相互独立，所以所求概率为 ${a}/${total} × ${a}/${total} = ${fraction(a ** 2, total ** 2)}。`);
+      },
+      () => {
+        const a = random(2, 10);
+        const b = random(2, 10);
+        const total = a + b;
+        return item(`袋中有 ${a} 个红球和 ${b} 个蓝球，除颜色外均相同。先后随机摸出两个球，第一次摸出的球不放回。求先红后蓝的概率。`, fraction(a * b, total * (total - 1)), `第一次摸到红球的概率是 ${a}/${total}。这时还剩 ${total - 1} 个球，蓝球仍有 ${b} 个。两个概率相乘，得 ${fraction(a * b, total * (total - 1))}。`);
+      },
+      () => {
+        const rate = random(15, 85);
+        const n = random(2, 12) * 100;
+        return item(`用同样条件反复抛一枚质地不均匀的硬币 ${n} 次，正面朝上 ${n * rate / 100} 次。用试验频率估计下一次正面朝上的概率。`, `约 ${rate}%`, `正面出现的频率 = ${n * rate / 100} ÷ ${n} = ${rate}%。用多次重复试验的频率估计事件的概率。`);
+      },
+    ],
+    advanced: [
+      () => {
+        const a = random(2, 11);
+        const b = random(2, 11);
+        const total = a + b;
+        return item(`袋中有 ${a} 个红球和 ${b} 个蓝球，除颜色外均相同。连续随机摸出两个球且不放回。求两球颜色相同的概率。`, fraction(a * (a - 1) + b * (b - 1), total * (total - 1)), `颜色相同包括红红与蓝蓝，两种结果互斥。红红的概率是 ${a}/${total} × ${a - 1}/${total - 1}；蓝蓝的概率是 ${b}/${total} × ${b - 1}/${total - 1}。相加并约分得到结果。`, 4);
+      },
+      () => {
+        const redA = random(2, 8);
+        const blueA = random(2, 8);
+        const redB = random(2, 8);
+        const blueB = random(2, 8);
+        const totalA = redA + blueA;
+        const totalB = redB + blueB;
+        return item(`甲袋装 ${redA} 个红球和 ${blueA} 个蓝球，乙袋装 ${redB} 个红球和 ${blueB} 个蓝球。球除颜色外均相同，从两袋中各随机摸出 1 球，求至少摸到 1 个红球的概率。`, fraction(totalA * totalB - blueA * blueB, totalA * totalB), `至少 1 个红球的反面是两个都是蓝球。两袋的抽取相互独立，蓝蓝的概率为 ${blueA}/${totalA} × ${blueB}/${totalB}，所以所求概率为 1 减去这个概率。`, 4);
+      },
+    ],
+  });
+
+  const projection = topic('projection-views', '第30章 投影与视图', '上册', {
+    basic: [
+      () => {
+        const length = random(3, 22);
+        const width = random(3, 18);
+        const height = random(2, 16);
+        return item(`一个长方体水平放置，左右方向长 ${length} cm，前后方向宽 ${width} cm，竖直方向高 ${height} cm。写出它的主视图和俯视图的形状与尺寸。`, `主视图是 ${length} cm × ${height} cm 的矩形，俯视图是 ${length} cm × ${width} cm 的矩形。`, `从正前方能看出左右长度和高度；从正上方能看出左右长度和前后宽度。`, 2);
+      },
+      () => {
+        const diameter = 2 * random(2, 20);
+        const height = random(4, 26);
+        return item(`一个圆柱竖直放在水平桌面上，底面直径为 ${diameter} cm，高为 ${height} cm。求主视图和俯视图的面积，含 π 的结果保留 π。`, `主视图面积 ${diameter * height} cm²，俯视图面积 ${(diameter / 2) ** 2}π cm²`, `主视图是宽为底面直径、高为圆柱高的矩形；俯视图是半径为 ${diameter / 2} cm 的圆。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const length = random(3, 19);
+        const width = random(2, 17);
+        const height = random(2, 16);
+        return item(`一个长方体的俯视图是左右长 ${length} cm、前后宽 ${width} cm 的矩形，主视图的竖直高度为 ${height} cm。求左视图的面积和这个长方体的体积。`, `左视图面积 ${width * height} cm²，体积 ${length * width * height} cm³`, `左视图由前后宽度与高度确定，面积为 ${width} × ${height}。长方体体积为 ${length} × ${width} × ${height}。`);
+      },
+      () => {
+        const heights = Array.from({ length: 4 }, () => random(1, 7));
+        const total = heights.reduce((sum, height) => sum + height, 0);
+        return item(`同样的小正方体只在桌面排成一排，沿左右方向排列。从左到右，四列分别叠 ${heights.join('、')} 层。求主视图和俯视图各包含几个单位正方形。`, `主视图 ${total} 个，俯视图 4 个`, `从正前方看，能看见每一列的高度，正方形总数为 ${heights.join(' + ')} = ${total}。从正上方看，每列只占一格，共 4 格。`);
+      },
+    ],
+    advanced: [
+      () => {
+        // 每列至少一层，俯视图的六个位置都存在。主视图和左视图分别按对应方向取最大高度。
+        const front = Array.from({ length: 3 }, () => random(1, 7));
+        const back = Array.from({ length: 3 }, () => random(1, 7));
+        const frontView = front.reduce((sum, height, index) => sum + Math.max(height, back[index]), 0);
+        const leftView = Math.max(...front) + Math.max(...back);
+        const total = [...front, ...back].reduce((sum, height) => sum + height, 0);
+        return item(`用同样的小正方体在水平桌面上搭一个两排三列的模型。前排从左到右各叠 ${front.join('、')} 层，后排从左到右各叠 ${back.join('、')} 层。求模型所用的小正方体总数，以及主视图和左视图所含的单位正方形数。`, `共 ${total} 个小正方体；主视图 ${frontView} 格，左视图 ${leftView} 格。`, `先把六处层数相加。主视图每列取前、后排在该列的最大高度，三列相加为 ${frontView}；左视图每排只看该排最高的一列，合计 ${leftView}。`, 4);
+      },
+      () => {
+        const length = random(3, 16);
+        const width = random(3, 16);
+        const height = random(3, 16);
+        return item(`一个长方体的主视图面积为 ${length * height} cm²，左视图面积为 ${width * height} cm²，俯视图面积为 ${length * width} cm²。求长方体的竖直高度和体积。`, `高 ${height} cm，体积 ${length * width * height} cm³`, `设左右长为 a，前后宽为 b，高为 h。由题意 ah = ${length * height}，bh = ${width * height}，ab = ${length * width}。因此 h² = ah × bh ÷ ab = ${height ** 2}，取正值得 h = ${height}，再用 ab × h 求体积。`, 4);
+      },
+    ],
+  });
+
+  const analysis = topic('sampling-data-analysis', '第32章 抽样与数据分析', '下册', {
+    basic: [
+      () => {
+        const center = random(8, 45);
+        const gap = random(1, 5);
+        const data = [center + gap, center - gap, center, center + 2 * gap, center - 2 * gap];
+        return item(`一组观测数据为 ${data.join('、')}。求这组数据的平均数和中位数。`, `平均数 ${center}，中位数 ${center}`, `将五个数相加得到 ${5 * center}，除以 5 得 ${center}。由小到大排列为 ${[...data].sort((a, b) => a - b).join('、')}，第 3 个数是中位数。`, 2);
+      },
+      () => {
+        const population = random(15, 60) * 10;
+        const sample = random(3, 12) * 10;
+        return item(`某校有 ${population} 名学生，从中随机抽取 ${sample} 名学生，记录他们当天的课外阅读时间。指出调查的总体、样本以及样本容量。`, `总体是该校 ${population} 名学生当天的课外阅读时间；样本是所抽 ${sample} 名学生当天的课外阅读时间；样本容量是 ${sample}。`, `研究对象是课外阅读时间。全部观测值组成总体，抽取的观测值组成样本，样本中观测值的个数是样本容量。`, 2);
+      },
+    ],
+    standard: [
+      () => {
+        const mean = random(12, 50);
+        const gap = random(2, 8);
+        const data = [mean - gap, mean + gap + 1, mean - 1, mean - 2];
+        const givenTotal = data.reduce((sum, value) => sum + value, 0);
+        return item(`五次测量的平均值为 ${mean}，已知前四次测量值分别为 ${data.join('、')}。求第五次的测量值。`, `${mean + 2}`, `五次测量总和为 5 × ${mean} = ${5 * mean}。前四次的总和是 ${givenTotal}，第五次为 ${5 * mean} − ${givenTotal} = ${mean + 2}。`);
+      },
+      () => {
+        const n = random(4, 16) * 5;
+        const count = random(3, n - 3);
+        const multiplier = random(3, 14);
+        return item(`从 ${n * multiplier} 件同批产品中随机抽取 ${n} 件，其中 ${count} 件达到优等。按样本比例估计，这一批约有多少件优等产品？`, `约 ${count * multiplier} 件`, `样本优等品比例为 ${count}/${n}，估计优等产品件数为 ${n * multiplier} × ${count}/${n} = ${count * multiplier}。`);
+      },
+    ],
+    advanced: [
+      () => {
+        const mean = random(13, 35);
+        const smallGap = random(1, 5);
+        const largeGap = smallGap + random(1, 5);
+        const a = [mean - smallGap, mean, mean, mean + smallGap];
+        const b = [mean - largeGap, mean, mean, mean + largeGap];
+        const va = smallGap ** 2 / 2;
+        const vb = largeGap ** 2 / 2;
+        return item(`甲、乙两台设备各连续测量同一物体 4 次。甲的记录为 ${a.join('、')}，乙为 ${b.join('、')}。分别计算两组数据的方差（平方离差和除以数据个数），并判断哪台设备的测量结果更稳定。`, `甲的方差 ${va}，乙的方差 ${vb}，甲更稳定。`, `两组平均数都是 ${mean}。甲的平方离差和是 2 × ${smallGap}²，乙是 2 × ${largeGap}²，分别除以 4。甲的方差更小，结果更稳定。`, 4);
+      },
+      () => {
+        const group1 = random(3, 9) * 5;
+        const group2 = random(4, 12) * 5;
+        const rate1 = random(2, 4);
+        const rate2 = random(1, 3);
+        const estimate1 = group1 * 4 * rate1 / 5;
+        const estimate2 = group2 * 6 * rate2 / 5;
+        return item(`某年级两个校区分别有 ${group1 * 4} 名和 ${group2 * 6} 名学生。分别随机抽取 ${group1} 名和 ${group2} 名学生，其中喜欢晨读的分别有 ${group1 * rate1 / 5} 名和 ${group2 * rate2 / 5} 名。按各校区的样本比例，估计两个校区喜欢晨读的学生总数。`, `约 ${estimate1 + estimate2} 名`, `第一个校区按比例 ${rate1}/5 估计为 ${estimate1} 名，第二个校区按比例 ${rate2}/5 估计为 ${estimate2} 名。把两个估计值相加得 ${estimate1 + estimate2} 名。`, 4);
+      },
+    ],
+  });
+
+  return [functions, similarity, trig, projection, circles, analysis, probability];
+})();
+
+function makePaperPdf(paper, mode) {
+  const isAnswerSheet = mode === 'answers';
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 46;
+  const rightEdge = pageWidth - margin;
+  const contentBottom = pageHeight - 57;
+  const canvas = document.createElement('canvas');
+  canvas.width = pageWidth * 2;
+  canvas.height = pageHeight * 2;
+  const context = canvas.getContext('2d', { alpha: false });
+  const fonts = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Heiti SC", sans-serif';
+  const pageImages = [];
+  let pageNumber = 0;
+  let cursor = 0;
+
+  function setFont(size, weight) {
+    context.font = `${weight} ${size}px ${fonts}`;
+  }
+
+  function write(text, x, y, size, weight = 400, color = '#182325') {
+    setFont(size, weight);
+    context.fillStyle = color;
+    context.fillText(text, x, y);
+  }
+
+  function rule(x1, x2, y, color = '#b4c0be') {
+    context.strokeStyle = color;
+    context.lineWidth = 0.65;
+    context.beginPath();
+    context.moveTo(x1, y);
+    context.lineTo(x2, y);
+    context.stroke();
+  }
+
+  function wrap(text, width, size, weight = 400) {
+    setFont(size, weight);
+    return String(text).split(/\r?\n/).flatMap(paragraph => {
+      const lines = [];
+      let line = '';
+      // 尽量在词组之间换行，中文和超长算式可按字符断开。
+      for (const part of paragraph.match(/[a-zA-Z0-9]+(?:[./%][a-zA-Z0-9]+)*%?|./gu) || []) {
+        if (line && context.measureText(line + part).width > width) {
+          lines.push(line.trimEnd());
+          line = '';
+        }
+        for (const character of part) {
+          if (line && context.measureText(line + character).width > width) {
+            lines.push(line.trimEnd());
+            line = '';
+          }
+          if (line || character.trim()) line += character;
+        }
+      }
+      lines.push(line);
+      return lines;
+    });
+  }
+
+  function startPage() {
+    pageNumber += 1;
+    context.setTransform(2, 0, 0, 2, 0, 0);
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, pageWidth, pageHeight);
+    context.textBaseline = 'top';
+    const label = isAnswerSheet ? '答案与解析' : '学生卷';
+    if (pageNumber === 1) {
+      write(label, margin, 43, 10, 600, '#285852');
+      const title = wrap(paper.title, rightEdge - margin, 25, 700);
+      title.forEach((line, index) => write(line, margin, 61 + index * 31, 25, 700));
+      const metaY = 64 + title.length * 31;
+      const details = [paper.bookLabel, paper.difficultyLabel, `共 ${paper.questions.length} 道题`].filter(Boolean);
+      write(details.join('   ·   '), margin, metaY, 10.5, 400, '#4d5c5a');
+      if (!isAnswerSheet) {
+        write('班级', margin, metaY + 26, 10.5);
+        rule(margin + 27, margin + 126, metaY + 40);
+        write('姓名', margin + 149, metaY + 26, 10.5);
+        rule(margin + 176, margin + 275, metaY + 40);
+        write('日期', margin + 298, metaY + 26, 10.5);
+        rule(margin + 325, rightEdge, metaY + 40);
+      }
+      cursor = metaY + (isAnswerSheet ? 27 : 54);
+    } else {
+      const title = wrap(`${paper.title} · ${label}`, rightEdge - margin, 11, 600);
+      title.forEach((line, index) => write(line, margin, 39 + index * 16, 11, 600));
+      cursor = 44 + title.length * 16;
+    }
+    rule(margin, rightEdge, cursor);
+    cursor += 18;
+  }
+
+  function savePage() {
+    rule(margin, rightEdge, pageHeight - 43, '#dce4e2');
+    const footer = `第 ${pageNumber} 页`;
+    setFont(9, 400);
+    write(footer, (pageWidth - context.measureText(footer).width) / 2, pageHeight - 31, 9, 400, '#4d5c5a');
+    // 每一页先转为 JPEG，再复用同一画布，避免手机同时持有多张大画布。
+    const base64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    pageImages.push(Uint8Array.from(atob(base64), character => character.charCodeAt(0)));
+  }
+
+  startPage();
+  paper.questions.forEach((question, index) => {
+    const textX = margin + 30;
+    const textWidth = rightEdge - textX;
+    const prompts = wrap(question.prompt, textWidth, 12, 600);
+    const answers = isAnswerSheet ? wrap(`答案  ${question.answer}`, textWidth, 11.5, 600) : [];
+    const explanations = isAnswerSheet ? wrap(`解析  ${question.explanation}`, textWidth, 11) : [];
+    const answerLines = Math.max(1, Math.min(4, Number(question.lines) || 1));
+    const blockHeight = prompts.length * 19 + (isAnswerSheet
+      ? 5 + answers.length * 18 + explanations.length * 17
+      : 5 + answerLines * 24) + 15;
+
+    // 整题移到下一页，避免题干和解析或作答区被分页切开。
+    if (cursor + blockHeight > contentBottom) {
+      savePage();
+      startPage();
+    }
+
+    write(`${index + 1}.`, margin, cursor, 11.5, 700, '#285852');
+    for (const line of prompts) {
+      write(line, textX, cursor, 12, 600);
+      cursor += 19;
+    }
+    cursor += 5;
+    if (isAnswerSheet) {
+      for (const line of answers) {
+        write(line, textX, cursor, 11.5, 600, '#285852');
+        cursor += 18;
+      }
+      for (const line of explanations) {
+        write(line, textX, cursor, 11);
+        cursor += 17;
+      }
+    } else {
+      for (let line = 0; line < answerLines; line += 1) {
+        rule(textX, rightEdge, cursor + 18, '#aebbb8');
+        cursor += 24;
+      }
+    }
+    cursor += 15;
+  });
+  savePage();
+
+  const imageWidth = canvas.width;
+  const imageHeight = canvas.height;
+  canvas.width = 0;
+  canvas.height = 0;
+  const encoder = new TextEncoder();
+  const parts = [];
+  const offsets = [0];
+  let byteCount = 0;
+
+  function append(value) {
+    const bytes = typeof value === 'string' ? encoder.encode(value) : value;
+    parts.push(bytes);
+    byteCount += bytes.length;
+  }
+
+  function writeObject(id, dictionary, stream) {
+    offsets[id] = byteCount;
+    append(`${id} 0 obj\n${dictionary}`);
+    if (stream) {
+      append('\nstream\n');
+      append(stream);
+      append('\nendstream');
+    }
+    append('\nendobj\n');
+  }
+
+  // PDF 的交叉引用表按字节定位，图片流长度与偏移量都按二进制计算。
+  append('%PDF-1.4\n');
+  append(new Uint8Array([37, 226, 227, 207, 211, 10]));
+  const pages = pageImages.map((_, index) => `${3 + index * 3} 0 R`).join(' ');
+  writeObject(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  writeObject(2, `<< /Type /Pages /Kids [${pages}] /Count ${pageImages.length} >>`);
+  const placement = encoder.encode('q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n');
+  pageImages.forEach((image, index) => {
+    const page = 3 + index * 3;
+    writeObject(page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${page + 2} 0 R >> >> /Contents ${page + 1} 0 R >>`);
+    writeObject(page + 1, `<< /Length ${placement.length} >>`, placement);
+    writeObject(page + 2, `<< /Type /XObject /Subtype /Image /Width ${imageWidth} /Height ${imageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.length} >>`, image);
+  });
+  const tableStart = byteCount;
+  append(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
+  offsets.slice(1).forEach(offset => append(`${String(offset).padStart(10, '0')} 00000 n \n`));
+  append(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${tableStart}\n%%EOF\n`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+
+
+const form = document.getElementById("settings");
+const gradeInput = document.getElementById("grade");
+const termInput = document.getElementById("term");
+const topics = document.getElementById("topics");
+const countInput = document.getElementById("count");
+const selectAll = document.getElementById("all-topics");
+const formStatus = document.getElementById("form-status");
+const exportStatus = document.getElementById("export-status");
+const preview = document.getElementById("paper");
+const printButton = document.getElementById("print");
+const downloadButton = document.getElementById("download");
+const tabs = Array.from(document.querySelectorAll("[role=tab]"));
+const levels = { basic: "基础", standard: "标准", advanced: "提高" };
+const modes = { student: "学生卷", answers: "答案解析" };
+const grades = { 6: GRADE_6, 7: GRADE_7, 8: GRADE_8, 9: GRADE_9 };
+let paper;
+let mode = "student";
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function availableTopics() {
+  const topicsForGrade = grades[gradeInput.value];
+  return termInput.value === "上下册" ? topicsForGrade : topicsForGrade.filter(topic => topic.term === termInput.value);
+}
+
+function renderTopics() {
+  const options = availableTopics().map((topic, index) => {
+    const option = element("label", "topic");
+    const input = element("input");
+    input.type = "checkbox";
+    input.name = "topic";
+    input.value = topic.id;
+    input.checked = index < 3;
+    option.append(input, element("span", "", topic.label));
+    return option;
+  });
+  topics.replaceChildren(...options);
+  updateSelectAll();
+}
+
+function generatePaperQuestions(topicIds, difficulty, count) {
+  const selected = shufflePaperItems(availableTopics().filter(topic => topicIds.includes(topic.id)));
+  const prompts = new Set();
+  const questions = [];
+  for (let index = 0; index < count; index++) {
+    // 轮流从所选知识点取题，题量足够时每个知识点都能覆盖。
+    const topic = selected[index % selected.length];
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const question = topic.generate(difficulty);
+      if (prompts.has(question.prompt)) continue;
+      questions.push(question);
+      prompts.add(question.prompt);
+      break;
+    }
+  }
+  return shufflePaperItems(questions);
+}
+
+function updateSelectAll() {
+  selectAll.textContent = Array.from(topics.querySelectorAll("input")).every(input => input.checked) ? "取消全选" : "全选";
+}
+
+function showFormStatus(message, error = false) {
+  formStatus.textContent = message;
+  formStatus.dataset.error = String(error);
+}
+
+function updateSettings() {
+  updateSelectAll();
+  showFormStatus("点击「生成新试卷」应用设置。");
+}
+
+function renderPaper() {
+  const answerMode = mode === "answers";
+  const heading = element("h3", "", answerMode ? paper.title + " · 答案解析" : paper.title);
+  const details = [paper.bookLabel, paper.difficultyLabel && paper.difficultyLabel + "难度", `共 ${paper.questions.length} 题`];
+  const meta = element("p", "paper-meta", details.filter(Boolean).join(" · "));
+  const content = [heading, meta];
+
+  // 试卷和答案使用同一组题，切换视图不会重新生成或改变题号。
+  if (!answerMode) {
+    const identity = element("p", "identity");
+    for (const label of ["姓名 ____________", "班级 ____________", "日期 ____________"]) {
+      identity.append(element("span", "", label));
+    }
+    content.push(identity);
+  }
+
+  const list = element("ol", "question-list");
+  for (const question of paper.questions) {
+    const item = element("li");
+    item.append(element("p", "question-text", question.prompt));
+    if (answerMode) {
+      const solution = element("p", "solution");
+      solution.append(element("strong", "", "答案　"), document.createTextNode(question.answer));
+      item.append(solution, element("p", "solution-details", question.explanation));
+    } else {
+      for (let index = 0; index < question.lines; index++) {
+        const line = element("div", "writing-line");
+        line.setAttribute("aria-hidden", "true");
+        item.append(line);
+      }
+    }
+    list.append(item);
+  }
+  content.push(list);
+  preview.replaceChildren(...content);
+  preview.setAttribute("aria-labelledby", "tab-" + mode);
+  for (const tab of tabs) {
+    const selected = tab.dataset.mode === mode;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  }
+  printButton.textContent = "打印" + modes[mode];
+  downloadButton.textContent = "下载" + modes[mode] + " PDF";
+  exportStatus.textContent = "";
+}
+
+function createPaper() {
+  const settings = new FormData(form);
+  const selectedTopics = settings.getAll("topic");
+  if (!selectedTopics.length) {
+    showFormStatus("请至少选择一个知识点。", true);
+    topics.querySelector("input").focus();
+    return;
+  }
+  const difficulty = settings.get("difficulty");
+  const gradeLabel = gradeInput.selectedOptions[0].textContent;
+  const count = countInput.valueAsNumber;
+  const questions = generatePaperQuestions(selectedTopics, difficulty, count);
+  if (questions.length !== count) {
+    showFormStatus("本次未能生成指定题量，请再试一次。", true);
+    return;
+  }
+  paper = {
+    title: gradeLabel + "数学小测",
+    bookLabel: "沪教版五·四学制 " + termInput.value,
+    difficultyLabel: levels[difficulty],
+    questions
+  };
+  mode = "student";
+  renderPaper();
+  const topicCount = new Set(questions.map(question => question.topic)).size;
+  showFormStatus(`已生成 ${questions.length} 道题，覆盖 ${topicCount} 个知识点。`);
+}
+
+// 切换年级或册次时重建选项，避免上一本书的知识点混入新试卷。
+for (const bookInput of [gradeInput, termInput]) {
+  bookInput.addEventListener("change", () => {
+    renderTopics();
+    updateSettings();
+  });
+}
+form.addEventListener("input", updateSettings);
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  createPaper();
+});
+selectAll.addEventListener("click", () => {
+  const inputs = Array.from(topics.querySelectorAll("input"));
+  const select = !inputs.every(input => input.checked);
+  for (const input of inputs) input.checked = select;
+  updateSettings();
+});
+for (const button of form.querySelectorAll("[data-step]")) {
+  button.addEventListener("click", () => {
+    countInput.value = String(Math.min(30, Math.max(1, (countInput.valueAsNumber || 10) + Number(button.dataset.step))));
+    updateSettings();
+  });
+}
+for (const tab of tabs) {
+  tab.addEventListener("click", () => {
+    mode = tab.dataset.mode;
+    renderPaper();
+  });
+  tab.addEventListener("keydown", event => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const target = event.key === "Home" ? tabs[0] : event.key === "End" ? tabs[1] : tabs.find(item => item !== tab);
+    target.click();
+    target.focus();
+  });
+}
+
+// 页面始终只挂载一种文档，浏览器打印时也只会打印当前预览。
+printButton.addEventListener("click", () => window.print());
+downloadButton.addEventListener("click", () => {
+  const currentMode = mode;
+  const currentPaper = paper;
+  downloadButton.disabled = true;
+  exportStatus.dataset.error = "false";
+  exportStatus.textContent = "正在准备 PDF…";
+  // 捕获当前试卷和选中的版本，避免生成期间切换预览造成文件名与内容错配。
+  setTimeout(() => {
+    try {
+      const file = makePaperPdf(currentPaper, currentMode);
+      const url = URL.createObjectURL(file);
+      const link = element("a");
+      link.href = url;
+      link.download = currentPaper.title + "-" + modes[currentMode] + ".pdf";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      // 保留临时地址一段时间，让手机浏览器有时间读取文件。
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      exportStatus.textContent = "PDF 已生成。";
+    } catch {
+      exportStatus.dataset.error = "true";
+      exportStatus.textContent = "无法生成 PDF，请使用打印按钮或换浏览器重试。";
+    } finally {
+      downloadButton.disabled = false;
+    }
+  }, 0);
+});
+
+renderTopics();
+createPaper();
+
+(() => {
+  const byId = id => document.getElementById(id);
+  const categories = {
+    vertex_root: "混淆顶点与横轴交点",
+    symmetry: "对称轴或顶点求法有误",
+    algebra: "代数运算有误",
+    context: "忽略取值范围或情境",
+    sign: "正负号处理有误",
+    inequality: "除以负数时未改变不等号方向",
+    missing_root: "开平方时漏掉一个根",
+    inconsistent: "步骤与结论不一致",
+    other: "其他可定位问题",
+    correct: "依据充分，作答正确",
+    uncertain: "依据不足，待追问",
+  };
+  const quadratic = GRADE_9.find(topic => topic.id === "quadratic-functions");
+  const questionBank = quadratic.diagnosis;
+  const variantLabels = { flight: "最高点与落地时间", intersection: "横轴交点与对称轴", bank: "从本章题库选题" };
+  const gradeNames = { 6: "六年级", 7: "七年级", 8: "八年级", 9: "九年级" };
+  const initialTopics = { 6: "rational", 7: "g7-inequalities", 8: "g8-quadratic", 9: quadratic.id };
+  const grade = byId("diagnosis-grade");
+  const topic = byId("diagnosis-topic");
+  const variant = byId("diagnosis-variant");
+  const custom = byId("diagnosis-custom");
+  const input = byId("diagnosis-input");
+  const promptBox = byId("diagnosis-prompt");
+  const resultBox = byId("diagnosis-result");
+  const status = byId("diagnosis-status");
+  const transfer = byId("diagnosis-transfer");
+  const transferStatus = byId("diagnosis-transfer-status");
+  const review = byId("diagnosis-review");
+  const cards = byId("diagnosis-cards");
+  const project = byId("diagnosis-project");
+  const graphButtons = Array.from(document.querySelectorAll("[data-graph-focus]"));
+  const views = {
+    paper: byId("paper-view"),
+    diagnosis: byId("diagnosis-view"),
+    projection: byId("diagnosis-projection"),
+  };
+  let selection = { grade: "9", topic: quadratic.id, variant: "flight" };
+  let question = questionBank.flight.example();
+  let batch = null;
+  let rows = [];
+
+  function message(text, error = false, target = status) {
+    target.textContent = text;
+    target.dataset.error = String(error);
+  }
+
+  function openView(view, focusTarget) {
+    for (const [name, panel] of Object.entries(views)) panel.hidden = name !== view;
+    for (const name of ["paper", "diagnosis"]) {
+      const tab = byId("open-" + name);
+      if (name === (view === "paper" ? "paper" : "diagnosis")) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
+    }
+    byId(focusTarget).focus();
+  }
+
+  function renderQuestion() {
+    const text = question ? [question.answer, question.explanation].filter(Boolean).join(" ") : "";
+    byId("diagnosis-question").textContent = question?.prompt ?? "保存课堂题目后即可开始讲评。";
+    byId("diagnosis-answer").textContent = text;
+    byId("diagnosis-reference").hidden = !text;
+    byId("diagnosis-reference").open = false;
+    byId("diagnosis-print").disabled = !question;
+    byId("diagnosis-reroll").hidden = selection.topic === "custom";
+    const checks = Boolean(question?.graph || question?.diagnosisRule);
+    byId("diagnosis-method").textContent = checks ? "按题型检查常见错法" : "可手动复核，也可导入外部 AI 的建议";
+    byId("diagnosis-check-label").textContent = checks ? "分析作答" : "开始复核";
+    drawHeroPlot();
+  }
+
+  function drawHeroPlot() {
+    const canvas = byId("diagnosis-hero-plot");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // 没有题目图像时用开口向下的通用背景，投屏只展示题目实际提供的图像。
+    const { a, b, c } = question?.graph ?? { a: -1, b: 0, c: 1 };
+    const vertex = -b / (2 * a);
+    const halfSpan = Math.sqrt(b * b - 4 * a * c) / (2 * Math.abs(a));
+    const direction = Math.sign(a);
+    const px = relative => 472 + 171 * relative;
+    const py = relative => 202 + 101 * direction * (1 - relative ** 2);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 题目变化时更新示意图的开口方向，按零点与顶点的相对距离绘制，装饰图不显示数值答案。
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#bcb5fc26";
+    for (let x = 142; x <= 760; x += 38) {
+      ctx.beginPath(); ctx.moveTo(x, 34); ctx.lineTo(x, 367); ctx.stroke();
+    }
+    for (let y = 50; y <= 365; y += 38) {
+      ctx.beginPath(); ctx.moveTo(142, y); ctx.lineTo(760, y); ctx.stroke();
+    }
+    // 边缘的连线和节点只作背景，中心曲线和三个关键点保持醒目。
+    const clusters = [
+      [[96, 244], [162, 185], [233, 226], [258, 158], [329, 137]],
+      [[543, 302], [610, 333], [685, 290], [751, 321], [788, 257]],
+      [[529, 83], [609, 47], [660, 93], [732, 59], [779, 125]],
+    ];
+    ctx.strokeStyle = "#a6b4fc6e";
+    ctx.fillStyle = "#b0e3ffb5";
+    for (const cluster of clusters) {
+      ctx.beginPath();
+      ctx.moveTo(...cluster[0]);
+      for (const node of cluster.slice(1)) ctx.lineTo(...node);
+      ctx.stroke();
+      for (const [x, y] of cluster) {
+        ctx.beginPath();
+        ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+    ctx.strokeStyle = "#a394ff36";
+    ctx.beginPath();
+    ctx.ellipse(516, 200, 283, 138, -.23, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.strokeStyle = "#88cffa2e";
+    ctx.beginPath();
+    ctx.ellipse(516, 200, 309, 159, -.23, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.strokeStyle = "#bdb7fb82";
+    ctx.setLineDash([5, 7]);
+    ctx.beginPath(); ctx.moveTo(px(0), 28); ctx.lineTo(px(0), 368); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(143, py(1)); ctx.lineTo(760, py(1)); ctx.stroke();
+
+    if (!Number.isFinite(vertex) || !(halfSpan > 0)) return;
+    const gradient = ctx.createLinearGradient(195, 0, 735, 0);
+    gradient.addColorStop(0, "#8e81f1");
+    gradient.addColorStop(.58, "#d6bdff");
+    gradient.addColorStop(1, "#8adeef");
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = gradient;
+    ctx.shadowBlur = 17;
+    ctx.shadowColor = "#a494ff";
+    ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const t = -1.54 + i * .0308;
+      if (i === 0) ctx.moveTo(px(t), py(t));
+      else ctx.lineTo(px(t), py(t));
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    for (const point of [-1, 0, 1]) {
+      ctx.beginPath();
+      ctx.arc(px(point), py(point), 13, 0, 2 * Math.PI);
+      ctx.fillStyle = "#c8beff38";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px(point), py(point), 5, 0, 2 * Math.PI);
+      ctx.fillStyle = point === 0 ? "#e5ceff" : "#a0e8f2";
+      ctx.fill();
+    }
+  }
+
+  function resetReview() {
+    // 题目或原文变更后，先前生成的指令、证据和确认状态都已失效。
+    batch = null;
+    rows = [];
+    review.hidden = true;
+    cards.replaceChildren();
+    transfer.open = false;
+    promptBox.hidden = true;
+    byId("diagnosis-prompt-label").hidden = true;
+    message("", false, transferStatus);
+    promptBox.value = "";
+    resultBox.value = "";
+    message("");
+  }
+
+  function chapterFor(current) {
+    return grades[current.grade].find(chapter => chapter.id === current.topic);
+  }
+
+  function questionLevel(current) {
+    return questionBank[current.variant]?.level ??
+      (["rational", "g8-quadratic"].includes(current.topic) ? "basic" : "standard");
+  }
+
+  function generateQuestion(current) {
+    return questionBank[current.variant]?.generate() ?? chapterFor(current).generate(questionLevel(current));
+  }
+
+  function showSelection() {
+    grade.value = selection.grade;
+    topic.replaceChildren();
+    for (const term of ["上册", "下册"]) {
+      const group = element("optgroup");
+      group.label = term;
+      for (const chapter of grades[selection.grade].filter(item => item.term === term)) {
+        const option = element("option", "", chapter.label.replace(/^第\d+章\s*/, ""));
+        option.value = chapter.id;
+        group.append(option);
+      }
+      topic.append(group);
+    }
+    const ownQuestion = element("option", "", "自带课堂题");
+    ownQuestion.value = "custom";
+    topic.append(ownQuestion);
+    topic.value = selection.topic;
+    variant.value = selection.variant;
+    byId("diagnosis-variant-field").hidden = selection.topic !== quadratic.id;
+    custom.hidden = selection.topic !== "custom";
+  }
+
+  function setQuestion(nextSelection, next, sample = "") {
+    if (input.value.trim() && !window.confirm("换题或载入示例会清空当前作答和复核结果，继续吗？")) {
+      showSelection();
+      return false;
+    }
+    selection = nextSelection;
+    showSelection();
+    question = next;
+    input.value = sample;
+    byId("diagnosis-custom-retest-form").reset();
+    byId("diagnosis-retest-status").textContent = "";
+    resetReview();
+    renderQuestion();
+    return true;
+  }
+
+  function readAnswers() {
+    if (!question) {
+      message("请先填写课堂题目，并点击「使用这道题」。", true);
+      byId("diagnosis-custom-prompt").focus();
+      return null;
+    }
+    const answers = input.value.trim().split(/\r?\n[ \t]*\r?\n(?:[ \t]*\r?\n)*/)
+      .map(answer => answer.trim()).filter(Boolean);
+    if (answers.length < 1 || answers.length > 30) {
+      message("请录入 1–30 份匿名作答，每份之间空一行。", true);
+      input.focus();
+      return null;
+    }
+    return answers;
+  }
+
+  function makePrompt(answers) {
+    return [
+      "请作为上海" + gradeNames[selection.grade] + "数学老师的讲评助手，逐份阅读以下匿名作答。找出第一处能从原文定位的问题，允许不同的正确解法。不根据答案猜测思路或动机。",
+      "每份作答请另起一段，按下列四行用普通中文回答。保留原作答顺序与标题：",
+      "第1份\n原文依据：逐字摘录学生的一句或一小段。找不到依据时填「依据不足」。\n可能错因：从下列选一项。\n建议追问：一句可以直接问学生的话。",
+      "错因选项：" + Object.values(categories).join("、"),
+      "只有结论或内容与题目无关时，选「依据不足，待追问」。不要在结果前后附加说明。",
+      "题目：" + question.prompt,
+      "参考答案与解析：" + ([question.answer, question.explanation].filter(Boolean).join(" ") || "老师未提供参考答案，请按题干独立核对。"),
+      answers.map((answer, i) => "第" + (i + 1) + "份\n" + answer).join("\n\n"),
+    ].join("\n\n");
+  }
+
+  function checkCommonError(text, rule) {
+    // 只用作答中的明确推导做校验；数字结论单独出现时保留待追问。
+    if (rule) {
+      const normalized = text.normalize("NFKC").replace(/[−－]/g, "-");
+      const roots = rule.type === "missing_root"
+        ? [...normalized.matchAll(/(?:x\s*=\s*|或\s*)([+±-]?\s*\d+)(?![\d.])/gi)]
+          .map(match => match[1].replace(/\s/g, "")) : [];
+      for (const original of text.split(/[。；;！？!?\n]/u)) {
+        const step = original.normalize("NFKC").replace(/[−－]/g, "-").replace(/\s+/g, "");
+        if (/(?:不是|并非|错误|假设|如果|应改|不对|有人|误写|更正)/u.test(step)) continue;
+        if (rule.type === "sign") {
+          const sum = rule.negative + rule.positive;
+          const wrongSign = sum < 0 ? "\\+?" + -sum : String(-sum);
+          const expression = new RegExp("(?:^|[^0-9(])(?:\\(" + rule.negative + "\\)|" + rule.negative + ")\\+" + rule.positive + "=(?:\\()?" + wrongSign + "(?![\\d.])");
+          if (sum !== 0 && expression.test(step)) {
+            return { category: "sign", evidence: original, question: "两个数的绝对值谁更大？结果应该保留哪个数的符号？" };
+          }
+        }
+        if (rule.type === "inequality") {
+          const direction = new RegExp("x>" + rule.boundary + "(?![\\d.])", "i");
+          const division = new RegExp("除以\\(?" + rule.coefficient + "(?![\\d.])");
+          if (division.test(step) && direction.test(step)) {
+            return { category: "inequality", evidence: original, question: "不等式两边同除以负数时，不等号应该朝哪边？" };
+          }
+        }
+        if (rule.type === "missing_root" && /开(?:平)?方/u.test(step) && /x=/i.test(step) &&
+            roots.length > 0 && roots.every(root => Number(root) === Number(roots[0]) && Math.abs(Number(root)) === rule.root) &&
+            !/[±]|正负|或|两个/u.test(normalized)) {
+          return { category: "missing_root", evidence: original, question: "还有哪个数平方后也等于右边？它能否代回原方程？" };
+        }
+      }
+    }
+    return { category: "uncertain", question: "你用到了哪个条件或性质？请补写从这一条件到结论的关键一步。" };
+  }
+
+  function checkWork(text) {
+    if (!question.graph) return checkCommonError(text, question.diagnosisRule);
+    const { a, b, c, xMax } = question.graph;
+    const axis = -b / (2 * a);
+    const clauses = text.split(/(?<=[。；;！!？?\n])/u);
+    const number = "([+−－-]?[0-9]+(?:\\.[0-9]+)?)";
+    const value = raw => Number(raw.replace(/[−－]/g, "-"));
+    const followUp = selection.variant === "flight"
+      ? "你用什么条件判断最高点和落地点？请写出关键一步。"
+      : "你是怎样从式子求横轴交点和对称轴的？请写出关键一步。";
+
+    // 只匹配能逐字引用的明确步骤；模糊、矛盾或无关文本交给教师追问。
+    if (selection.variant === "flight") {
+      const zeroIndex = clauses.findIndex(clause => /(?:令|设)\s*h\s*[=＝]\s*0\b/i.test(clause));
+      const axisStep = clauses.find(clause => /对称轴/.test(clause) &&
+        value(clause.match(new RegExp("t\\s*[=＝]\\s*" + number, "i"))?.[1] ?? "") === axis);
+      const peakPattern = new RegExp(number + "\\s*(?:秒|s)\\s*(?:时|到达|达到)*\\s*(?:为|是)?\\s*最高", "i");
+      const peakIndex = clauses.findIndex(clause => {
+        const match = clause.match(peakPattern);
+        return match && value(match[1]) === xMax && !/(?:不是|不在|并非|如果|假设)/.test(clause);
+      });
+      if (peakIndex >= 0 && axisStep) {
+        const start = clauses.indexOf(axisStep);
+        return { category: "inconsistent", evidence: clauses.slice(Math.min(start, peakIndex), Math.max(start, peakIndex) + 1).join(""),
+          question: "你写的对称轴和最终答案不同。哪个时间对应顶点？" };
+      }
+      if (peakIndex >= zeroIndex && zeroIndex >= 0 && peakIndex <= zeroIndex + 1 &&
+          /所以|因此|故/.test(clauses[peakIndex])) {
+        return { category: "vertex_root", evidence: clauses.slice(zeroIndex, peakIndex + 1).join(""),
+          question: "高度为零时小球在哪里？要找最高点，图上应该看哪里？" };
+      }
+    } else {
+      const rootStep = clauses.find(clause => /(?:令|设)\s*y\s*[=＝]\s*0\b/i.test(clause));
+      const axisPattern = new RegExp("对称轴(?:是|为)?[：:\\s]*x\\s*[=＝]\\s*" + number, "i");
+      const axisStep = clauses.find(clause => {
+        const match = clause.match(axisPattern);
+        if (!match || /(?:不是|并非|如果|假设)/.test(clause)) return false;
+        const x = value(match[1]);
+        return x !== axis && Math.abs((a * x + b) * x + c) < 1e-8;
+      });
+      if (rootStep && axisStep) {
+        const first = clauses.indexOf(rootStep);
+        const second = clauses.indexOf(axisStep);
+        return { category: "vertex_root", evidence: clauses.slice(Math.min(first, second), Math.max(first, second) + 1).join(""),
+          question: "这两个交点关于哪条直线对称？怎样用两个横坐标找它？" };
+      }
+    }
+    return { category: "uncertain", question: followUp };
+  }
+
+  function toRow(text, proposal, index) {
+    // 模型输出与匿名作答逐字校验。缺字段或引用无效时保留待确认，由老师补充。
+    const evidence = typeof proposal?.evidence === "string" ? proposal.evidence.trim() : "";
+    const hasEvidence = Boolean(evidence && text.includes(evidence));
+    const category = proposal?.category;
+    const accepted = hasEvidence && typeof category === "string" && Object.hasOwn(categories, category);
+    const followUp = typeof proposal?.question === "string" && (accepted || category === "uncertain")
+      ? proposal.question.trim().slice(0, 300) : "";
+    return {
+      id: index + 1,
+      text,
+      evidence: hasEvidence ? evidence : "",
+      category: accepted ? category : "uncertain",
+      followUp,
+      confirmed: false,
+      selected: false,
+    };
+  }
+
+  function loadReview(answers, proposals, source) {
+    rows = answers.map((text, index) => toRow(text, proposals.get(index + 1), index));
+    byId("diagnosis-source").textContent = source;
+    cards.replaceChildren(...rows.map(renderCard));
+    review.hidden = false;
+    updateTally();
+    byId("diagnosis-review-title").focus();
+  }
+
+  function updateTally() {
+    const confirmed = rows.filter(row => row.confirmed);
+    const selected = confirmed.filter(row => row.selected);
+    const totals = new Map();
+    for (const row of confirmed) totals.set(row.category, (totals.get(row.category) || 0) + 1);
+    const detail = [...totals].sort((left, right) => right[1] - left[1])
+      .map(([category, count]) => categories[category] + " " + count + " 份").join(" · ");
+    byId("diagnosis-tally").textContent = "已复核 " + confirmed.length + "/" + rows.length
+      + " 份 · 已选 " + selected.length + "/2 份" + (detail ? "｜" + detail : "");
+    for (const [index, control] of [...cards.querySelectorAll("[data-case-select]")].entries()) {
+      const row = rows[index];
+      control.checked = row.selected;
+      control.disabled = !row.confirmed || (!row.selected && selected.length === 2);
+    }
+    // 一份作答可以单独讲评，也可再选一份对照。
+    project.disabled = selected.length === 0;
+  }
+
+  function renderCard(row) {
+    const card = element("article", "diagnosis-case");
+    const categoryLabel = element("label", "field-label", "可能错因");
+    const category = element("select", "diagnosis-field");
+    for (const [id, label] of Object.entries(categories)) {
+      const option = element("option", "", label);
+      option.value = id;
+      category.append(option);
+    }
+    category.value = row.category;
+    categoryLabel.append(category);
+    const followUpLabel = element("label", "field-label", "建议追问");
+    const followUp = element("textarea");
+    followUp.value = row.followUp;
+    followUp.rows = 2;
+    followUp.maxLength = 300;
+    followUpLabel.append(followUp);
+
+    const confirmLabel = element("label", "case-toggle");
+    const confirm = element("input");
+    confirm.type = "checkbox";
+    confirmLabel.append(confirm, document.createTextNode("已复核"));
+    const chooseLabel = element("label", "case-toggle");
+    const choose = element("input");
+    choose.type = "checkbox";
+    choose.dataset.caseSelect = "";
+    chooseLabel.append(choose, document.createTextNode("选作讲评"));
+    const actions = element("div", "diagnosis-actions");
+    actions.append(confirmLabel, chooseLabel);
+
+    function reopenReview() {
+      // 修改已确认的结论或追问后须重新确认，避免把旧版本投到学生面前。
+      row.confirmed = false;
+      row.selected = false;
+      confirm.checked = false;
+      updateTally();
+    }
+    category.addEventListener("change", () => {
+      row.category = category.value;
+      reopenReview();
+    });
+    followUp.addEventListener("input", () => {
+      row.followUp = followUp.value.trim();
+      reopenReview();
+    });
+    confirm.addEventListener("change", () => {
+      row.confirmed = confirm.checked;
+      if (!row.confirmed) row.selected = false;
+      updateTally();
+    });
+    choose.addEventListener("change", () => {
+      row.selected = choose.checked;
+      updateTally();
+    });
+
+    const original = element("blockquote", "diagnosis-original");
+    if (row.evidence) {
+      const index = row.text.indexOf(row.evidence);
+      original.append(row.text.slice(0, index), element("mark", "", row.evidence), row.text.slice(index + row.evidence.length));
+    } else {
+      original.textContent = row.text;
+    }
+    const evidence = element("div");
+    evidence.append(element("p", "diagnosis-evidence", row.evidence ? "原文依据已高亮" : "还需要学生补充解题依据"), original);
+    const interpretation = element("div");
+    interpretation.append(categoryLabel, followUpLabel);
+    const body = element("div", "diagnosis-case-body");
+    body.append(evidence, interpretation);
+    card.append(element("h3", "", "第 " + row.id + " 份作答"), body, actions);
+    return card;
+  }
+
+  function importReview() {
+    if (!batch) {
+      message("请先复制本次作答的分析材料，再贴回 AI 的回答。", true, transferStatus);
+      return;
+    }
+    const proposals = new Map();
+    const headings = [...resultBox.value.matchAll(/^\s*(?:#+\s*)?(?:\*\*)?第\s*(\d+)\s*份(?:作答)?(?:\*\*)?[：:]?[^\S\r\n]*$/gm)];
+    for (const [index, heading] of headings.entries()) {
+      const number = Number(heading[1]);
+      const body = resultBox.value.slice(heading.index + heading[0].length, headings[index + 1]?.index);
+      const readLine = label => body.match(new RegExp("^\\s*(?:[-*]\\s*)?(?:\\*\\*)?" + label + "(?:\\*\\*)?[：:]\\s*(?:\\*\\*)?([^\\r\\n]+)", "m"))?.[1]
+        .trim().replace(/^[「“"]|[」”"]$/g, "") ?? "";
+      const reason = readLine("可能错因");
+      const category = Object.keys(categories).find(key => categories[key] === reason.replace(/[。.]$/, ""));
+      if (number < 1 || number > batch.length || proposals.has(number)) {
+        message("AI 的回答里有重复或不对应的作答。请让它按原顺序重新回答。", true, transferStatus);
+        return;
+      }
+      if (category) proposals.set(number, { category, evidence: readLine("原文依据"), question: readLine("建议追问") });
+    }
+    if (!proposals.size) {
+      message("没找到可复核的分析。请把 AI 的整段回答贴进来，或请它按分析材料中的格式重答。", true, transferStatus);
+      return;
+    }
+    // 导入只接收对应作答的原文引文，缺漏和无法核对的结论回到待追问。
+    loadReview(batch, proposals, "来自外部 AI 的建议。请核对原话，再选择要讲评的作答。");
+    transfer.open = false;
+  }
+
+  function showPrintable(next, isRetest) {
+    // 使用原试卷的预览、打印和 PDF 导出路径，题目和答案继续共享同一个题对象。
+    const chapter = chapterFor(selection);
+    gradeInput.value = selection.grade;
+    termInput.value = chapter?.term ?? "上下册";
+    renderTopics();
+    if (chapter) {
+      for (const box of topics.querySelectorAll("input")) box.checked = box.value === chapter.id;
+    }
+    const level = questionLevel(selection);
+    form.querySelector('input[name="difficulty"][value="' + level + '"]').checked = true;
+    countInput.value = "1";
+    updateSelectAll();
+    paper = {
+      title: gradeNames[selection.grade] + (chapter?.label.replace(/^第\d+章\s*/, "") ?? "课堂题") + (isRetest ? "复测" : "诊断"),
+      bookLabel: chapter ? "沪教版五·四学制 " + chapter.term : "教师自带题",
+      difficultyLabel: chapter ? levels[level] : "",
+      questions: [next],
+    };
+    mode = "student";
+    renderPaper();
+    showFormStatus("已载入讲评工作台的" + (isRetest ? "复测试卷。" : "诊断试卷。"));
+    openView("paper", "print");
+  }
+
+  function renderGraph(focus) {
+    const { a, b, c, xMin, xMax, xLabel = "x", yLabel = "y" } = question.graph;
+    const vertex = -b / (2 * a);
+    const evaluate = x => (a * x + b) * x + c;
+    const rootOffset = Math.sqrt(b * b - 4 * a * c) / Math.abs(2 * a);
+    const roots = [vertex - rootOffset, vertex + rootOffset].filter(x => x >= xMin && x <= xMax);
+    const samples = [0, evaluate(xMin), evaluate(xMax), evaluate(vertex)];
+    const low = Math.min(...samples);
+    const high = Math.max(...samples);
+    const pad = (high - low) * .12;
+    const xLeft = Math.min(0, xMin) - (xMax - xMin) * .11;
+    const xRight = Math.max(0, xMax) + (xMax - xMin) * .11;
+    const px = x => 25 + 510 * (x - xLeft) / (xRight - xLeft);
+    const py = y => 258 - 232 * (y - low + pad) / (high - low + 2 * pad);
+    const svgNS = "http://www.w3.org/2000/svg";
+    function shape(tag, attrs, text) {
+      const node = document.createElementNS(svgNS, tag);
+      for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, String(value));
+      if (text) node.textContent = text;
+      return node;
+    }
+    const line = (x1, y1, x2, y2, stroke, width) => shape("line", { x1, y1, x2, y2, stroke, "stroke-width": width });
+    const label = (x, y, text, anchor = "start") => shape("text",
+      { x, y, "text-anchor": anchor, fill: "#36304e", "font-size": 17, "font-weight": 650 }, text);
+    const svg = shape("svg", { viewBox: "0 0 560 285", role: "img", "aria-label": "当前诊断题的抛物线" });
+    svg.append(line(22, py(0), 536, py(0), "#726d89", 1.3), line(px(0), 19, px(0), 266, "#726d89", 1.3),
+      label(534, Math.max(20, py(0) - 8), xLabel, "end"), label(px(0) + 7, 19, yLabel));
+
+    // 仅绘制题目有效区间；抛物线、顶点与零点都从同一题目的参数计算。
+    const points = Array.from({ length: 101 }, (_, index) => {
+      const x = xMin + (xMax - xMin) * index / 100;
+      return px(x) + "," + py(evaluate(x));
+    });
+    svg.append(shape("polyline", { points: points.join(" "), fill: "none", stroke: "#4934b6", "stroke-width": 3.5 }));
+    if (focus === "vertex") {
+      const axis = line(px(vertex), 23, px(vertex), 264, "#6b45c0", 1.5);
+      axis.setAttribute("stroke-dasharray", "5 5");
+      svg.append(axis, shape("circle", { cx: px(vertex), cy: py(evaluate(vertex)), r: 6, fill: "#4934b6" }));
+    }
+    if (focus === "roots") {
+      for (const root of roots) svg.append(shape("circle", { cx: px(root), cy: py(0), r: 6, fill: "#ad421a" }));
+    }
+    byId("diagnosis-graph").replaceChildren(svg);
+    for (const button of graphButtons) button.setAttribute("aria-pressed", String(button.dataset.graphFocus === focus));
+    const fmt = n => Number(n.toFixed(2));
+    const vertexText = "顶点（" + fmt(vertex) + "，" + fmt(evaluate(vertex)) + "），对称轴为 " + (selection.variant === "flight" ? "t" : "x") + " = " + fmt(vertex) + "。";
+    const rootText = "横轴交点 " + roots.map(root => "（" + fmt(root) + "，0）").join("、")
+      + (selection.variant === "flight" ? "，表示小球落地。" : "，它们的纵坐标为 0。");
+    byId("graph-caption").textContent = focus === "vertex" ? vertexText
+      : focus === "roots" ? rootText : "先请学生在图上指出顶点和横轴交点，再点击核对。";
+  }
+
+  byId("open-paper").addEventListener("click", () => openView("paper", "title"));
+  byId("open-diagnosis").addEventListener("click", () => openView("diagnosis", "diagnosis-title"));
+  byId("diagnosis-return").addEventListener("click", () => openView("diagnosis", "diagnosis-review-title"));
+  function selectChapter(gradeValue, topicValue) {
+    const next = { grade: gradeValue, topic: topicValue, variant: topicValue === quadratic.id ? "flight" : "bank" };
+    setQuestion(next, topicValue === "custom" ? null : generateQuestion(next));
+  }
+
+  function anotherQuestion() {
+    // 同一批复测使用同章、同难度题目，并避免和本次诊断题重复。
+    for (let i = 0; i < 20; i++) {
+      const next = generateQuestion(selection);
+      if (next.prompt !== question.prompt &&
+          (!question.diagnosisRule || next.diagnosisRule?.type === question.diagnosisRule.type)) return next;
+    }
+    return null;
+  }
+
+  grade.addEventListener("change", () => selectChapter(grade.value, initialTopics[grade.value]));
+  topic.addEventListener("change", () => selectChapter(selection.grade, topic.value));
+  variant.addEventListener("change", () => {
+    const next = { ...selection, variant: variant.value };
+    setQuestion(next, generateQuestion(next));
+  });
+  custom.addEventListener("submit", event => {
+    event.preventDefault();
+    const prompt = byId("diagnosis-custom-prompt").value.trim();
+    if (!prompt) return byId("diagnosis-custom-prompt").focus();
+    if (setQuestion(selection, { prompt, answer: byId("diagnosis-custom-answer").value.trim(), explanation: "", lines: 4 })) {
+      byId("diagnosis-question").scrollIntoView({ block: "nearest" });
+    }
+  });
+  byId("diagnosis-reroll").addEventListener("click", () => {
+    const next = anotherQuestion();
+    if (next) setQuestion(selection, next);
+    else message("暂时没抽到新题，请再试一次。", true);
+  });
+  byId("diagnosis-print").addEventListener("click", () => showPrintable(question, false));
+  input.addEventListener("input", resetReview);
+  byId("diagnosis-check").addEventListener("click", () => {
+    const answers = readAnswers();
+    if (!answers) return;
+    if (!question.graph && !question.diagnosisRule) {
+      loadReview(answers, new Map(), "这道题可以由教师核对原话、填写错因，或从「其他分析方式」导入外部 AI 的建议。");
+      return;
+    }
+    const proposals = new Map(answers.map((text, index) => [index + 1, checkWork(text)]));
+    transfer.open = false;
+    message("");
+    loadReview(answers, proposals, "按题型检查常见错法。请核对原话，再选择要讲评的作答。");
+  });
+  byId("diagnosis-copy").addEventListener("click", async () => {
+    const answers = readAnswers();
+    if (!answers) return;
+    batch = answers;
+    promptBox.value = makePrompt(answers);
+    try {
+      await navigator.clipboard.writeText(promptBox.value);
+      message("已复制。发给你常用的 AI 后，将整段回答贴回来。", false, transferStatus);
+    } catch {
+      // 扣子嵌入预览可能无法直接访问剪贴板，选中文本供老师自行复制。
+      promptBox.hidden = false;
+      byId("diagnosis-prompt-label").hidden = false;
+      promptBox.focus();
+      promptBox.select();
+      message("请复制已选中的文字。", false, transferStatus);
+    }
+  });
+  byId("diagnosis-import").addEventListener("click", importReview);
+  byId("diagnosis-manual").addEventListener("click", () => {
+    const answers = readAnswers();
+    if (answers) loadReview(answers, new Map(), "填写并确认错因后，可选一到两份作答投屏。");
+  });
+  byId("diagnosis-example").addEventListener("click", () => {
+    const answers = [
+      "令 h = 0，解得 t = 7，所以 7 秒时最高，也在 7 秒时落地。",
+      "对称轴是 t = 3。令 h = 0 得 t = 7。答：7 秒时最高，7 秒时落地。",
+      "7 秒时最高，7 秒时落地。",
+    ];
+    if (!setQuestion({ grade: "9", topic: quadratic.id, variant: "flight" }, questionBank.flight.example(), answers.join("\n\n"))) return;
+    byId("diagnosis-check").click();
+  });
+  project.addEventListener("click", () => {
+    const selected = rows.filter(row => row.confirmed && row.selected);
+    if (selected.length === 0) return;
+    const chapter = chapterFor(selection);
+    byId("projection-title").textContent = (chapter?.label.replace(/^第\d+章\s*/, "") ?? gradeNames[selection.grade]) + " · 课堂讲评";
+    byId("projection-question").textContent = question.prompt;
+    byId("projection-cases").replaceChildren(...selected.map((row, index) => {
+      const card = element("article", "projection-case");
+      card.append(element("h3", "", "解法 " + (index + 1)), element("blockquote", "diagnosis-original", row.text));
+      if (row.followUp) card.append(element("p", "", row.followUp));
+      return card;
+    }));
+    byId("projection-graph-card").hidden = !question.graph;
+    byId("diagnosis-retest-card").hidden = !chapter;
+    byId("diagnosis-custom-retest").hidden = Boolean(chapter);
+    if (question.graph) renderGraph();
+    openView("projection", "projection-title");
+  });
+  for (const button of graphButtons) button.addEventListener("click", () => renderGraph(button.dataset.graphFocus));
+  byId("diagnosis-retest").addEventListener("click", () => {
+    const next = anotherQuestion();
+    if (next) showPrintable(next, true);
+    else byId("diagnosis-retest-status").textContent = "暂时没抽到新题，请再试一次。";
+  });
+  byId("diagnosis-custom-retest-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const field = byId("diagnosis-retest-prompt");
+    if (!field.value.trim()) return field.focus();
+    showPrintable({ prompt: field.value.trim(), answer: byId("diagnosis-retest-answer").value.trim(), explanation: "", lines: 4 }, true);
+  });
+  for (const [key, label] of Object.entries(variantLabels)) {
+    const option = element("option", "", label);
+    option.value = key;
+    variant.append(option);
+  }
+  showSelection();
+  renderQuestion();
+})();
+
+</script>
+</body>
+</html>
