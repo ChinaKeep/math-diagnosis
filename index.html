@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="沪教版六至九年级数学讲评工具。选择知识点或用课堂原题，核对学生作答，投屏讲评并准备复测试卷。">
+<meta name="description" content="上海六至九年级数学教学工具，支持错因诊断、投屏讲评、试卷生成，以及六年级短测、专项练习和错题复习。">
 <!-- 分享预览与浏览器标签使用相同标题，离开页面也能看出适用年级。 -->
 <meta property="og:title" content="AI 错因诊断与讲评台｜上海六至九年级数学">
-<meta property="og:description" content="从学生解题步骤找错因，复核后投屏讲评，再用同类题复测。">
+<meta property="og:description" content="从错因诊断到试卷生成，再到学生练习和错题复习，一站完成数学教学与巩固。">
 <meta name="theme-color" content="#f2f3fc">
 <title>AI 错因诊断与讲评台｜上海六至九年级数学</title>
 <style>
@@ -268,6 +268,92 @@
     #diagnosis-view,#diagnosis-projection{display:none!important}
   }
 
+    body:has(#practice-view:not([hidden])){background:#f6f5fb;min-height:100vh}
+  .practice-view{padding:28px 0 46px}
+  .practice-hero{
+    position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;
+    min-height:218px;padding:34px clamp(24px,4.5vw,54px);border-radius:24px;color:white;
+    background:linear-gradient(120deg,#171b3b 0%,#3b2e85 62%,#315f9a 100%);
+    box-shadow:0 16px 36px #33266c24
+  }
+  .practice-hero::after{
+    content:"";position:absolute;inset:0;z-index:-1;opacity:.34;
+    background-image:radial-gradient(circle,#fff 1px,transparent 1.5px);background-size:22px 22px;
+    mask-image:linear-gradient(90deg,transparent 35%,#000)
+  }
+  .practice-eyebrow{margin:0;color:#c8c5ff;font-size:13px;font-weight:750;letter-spacing:.07em}
+  .practice-hero h1{margin:10px 0 11px;font-size:clamp(29px,4.5vw,48px);line-height:1.1;letter-spacing:-.045em}
+  .practice-hero p:last-child{margin:0;color:#e5e3ff;font-size:15px}
+  .practice-hero-formula{display:grid;grid-template-columns:repeat(2,74px);gap:12px;flex:none;transform:rotate(-4deg)}
+  .practice-hero-formula span{
+    display:grid;place-items:center;min-height:64px;border:1px solid #ffffff45;border-radius:17px;
+    background:#ffffff12;box-shadow:inset 0 1px #ffffff26;font:700 22px/1 Georgia,serif
+  }
+  .practice-hero-formula span:nth-child(2){grid-row:span 2;min-height:140px;background:#b6e4ff1b}
+  .practice-nav{display:flex;gap:6px;margin:18px 0 14px;padding:5px;border:1px solid var(--line);border-radius:12px;background:#fff;width:max-content;max-width:100%}
+  .practice-nav-button{min-height:40px;padding:8px 14px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:700}
+  .practice-nav-button:hover,.practice-nav-button[aria-current="page"]{background:var(--soft);color:var(--accent)}
+  .practice-badge:not(:empty){display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:3px;padding:0 5px;border-radius:10px;background:var(--accent);color:white;font-size:11px}
+  .practice-app{min-height:280px;outline:none}
+  .practice-section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin:28px 0 13px}
+  .practice-section-head h2,.practice-card h1,.practice-card h2{margin:0;line-height:1.3}
+  .practice-section-head h2{font-size:23px}.practice-section-head p{margin:0;color:var(--muted);font-size:14px}
+  .practice-topic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+  .practice-topic{
+    display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;min-width:0;padding:15px;
+    border:1px solid var(--line);border-radius:15px;background:white;color:var(--ink);text-align:left;box-shadow:0 5px 18px #29236607
+  }
+  .practice-topic:hover{border-color:#b9a9f0;background:#fbfaff}
+  .practice-topic-symbol{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:#eeeaff;color:#4333b4;font:700 22px/1 Georgia,serif}
+  .practice-topic:nth-child(3n+2) .practice-topic-symbol{background:#e6f3ff;color:#285c91}
+  .practice-topic:nth-child(3n) .practice-topic-symbol{background:#f9e9d4;color:#8a5324}
+  .practice-topic strong,.practice-topic small{display:block;overflow-wrap:anywhere}.practice-topic small{margin-top:2px;color:var(--muted);font-size:12px}
+  .practice-topic-arrow{color:var(--accent);font-weight:800}
+  .practice-dashboard{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-top:18px}
+  .practice-card{padding:22px;border:1px solid var(--line);border-radius:16px;background:white;box-shadow:0 5px 20px #29236608}
+  .practice-card p{margin:8px 0 0}.practice-muted{color:var(--muted)}
+  .practice-kicker{margin-bottom:7px;color:#5c4ab5;font-size:12px;font-weight:800;letter-spacing:.1em}
+  .practice-stats{display:flex;gap:24px;flex-wrap:wrap;margin-top:13px}
+  .practice-stats strong{display:block;font-size:26px}.practice-stats span{color:var(--muted);font-size:12px}
+  .practice-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:17px}
+  .practice-button{min-height:42px;padding:8px 15px;border:1px solid var(--accent);border-radius:9px;background:var(--accent);color:white;font-weight:750}
+  .practice-button:hover{background:#382899}.practice-button:disabled{cursor:default;opacity:.45}
+  .practice-button-secondary{border-color:#d8d4eb;background:white;color:var(--accent)}
+  .practice-button-secondary:hover{background:#f4f0ff}
+  .practice-quiet{padding:7px 0;border:0;background:transparent;color:var(--muted);font-weight:700}
+  .practice-quiet:hover{color:var(--accent)}
+  .practice-work{max-width:790px;margin-inline:auto}
+  .practice-progress-head{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:14px;font-weight:700}
+  .practice-progress-track{height:8px;margin:10px 0 18px;overflow:hidden;border-radius:8px;background:#e5e3ef}
+  .practice-progress-track span{display:block;height:100%;background:linear-gradient(90deg,#6f58d7,#4884c1)}
+  .practice-question{padding:clamp(20px,4vw,32px)}
+  .practice-question h2{margin-bottom:20px;font-size:clamp(22px,3vw,30px);line-height:1.48}
+  .practice-options{display:grid;gap:8px}
+  .practice-choice{display:flex;align-items:center;gap:10px;min-height:48px;width:100%;padding:10px 13px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);text-align:left}
+  .practice-choice:not(:disabled):hover,.practice-choice[aria-pressed="true"]{border-color:#7358da;background:#f4f0ff}
+  .practice-choice b{padding:1px 7px;border-radius:6px;background:#eeeaff;color:#4333b4}
+  .practice-choice.is-correct{border-color:#6a9b67;background:#eaf5e6}.practice-choice.is-wrong{border-color:#bd7766;background:#faebe6}
+  .practice-hint,.practice-feedback,.practice-warning,.practice-empty{margin-top:14px;padding:12px 14px;border-radius:10px;background:#f4f0df}
+  .practice-feedback.is-correct{background:#eaf5e6}.practice-feedback.is-wrong{background:#faebe6}
+  .practice-feedback ol{margin:7px 0 0;padding-left:22px}.practice-feedback p{margin-top:5px}
+  .practice-warning{margin:0 0 13px;background:#fff0cd;color:#6e4a12}
+  .practice-report-list,.practice-review-list{display:grid;gap:9px;margin-top:16px}
+  .practice-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fcfbff}
+  .practice-row p{margin:4px 0 0;font-size:14px}.practice-row .practice-button{flex:none;padding:7px 12px;font-size:13px}
+  .practice-tag{display:inline-block;padding:2px 8px;border-radius:6px;background:#eeeaff;color:#493c91;font-size:12px}
+  .practice-result-score{margin:10px 0;font-size:48px;line-height:1.15;font-weight:850;color:var(--accent)}
+  .practice-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  @media(max-width:820px){.practice-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.practice-hero-formula{opacity:.64}}
+  @media(max-width:690px){
+    .practice-view{padding:14px 0 28px}.practice-hero{min-height:0;padding:22px 17px;border-radius:17px}.practice-hero p:last-child{font-size:13px;max-width:24em}
+    .practice-hero-formula{position:absolute;right:-35px;width:140px;opacity:.3}.practice-nav{margin-top:12px}.practice-nav-button{padding-inline:11px;font-size:13px}
+    .practice-section-head{align-items:start;flex-direction:column;gap:3px;margin-top:20px}.practice-topic-grid{gap:8px}
+    .practice-topic{grid-template-columns:30px minmax(0,1fr);gap:8px;padding:10px 9px}.practice-topic-symbol{width:30px;height:30px;border-radius:8px;font-size:18px}.practice-topic-arrow{display:none}
+    .practice-topic strong{font-size:14px}.practice-topic small{font-size:11px}.practice-dashboard{grid-template-columns:minmax(0,1fr)}
+    .practice-card{padding:16px}.practice-row{align-items:flex-start}.practice-row .practice-button{font-size:12px;padding-inline:8px}
+  }
+  @media print{#practice-view{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -275,8 +361,9 @@
   <div class="wrap">
     <span class="mark" aria-hidden="true">∑</span><span>数学教师工具</span>
     <nav class="tool-nav" aria-label="教师工具">
-      <button class="button" id="open-diagnosis" type="button" aria-current="page">诊断与讲评</button>
+      <button class="button" id="open-practice" type="button">学生练习</button>
       <button class="button" id="open-paper" type="button">试卷生成</button>
+      <button class="button" id="open-diagnosis" type="button" aria-current="page">诊断与讲评</button>
     </nav>
   </div>
 </header>
@@ -486,6 +573,27 @@
       <button class="button primary" type="submit">打开复测试卷</button>
     </form>
   </section>
+</section>
+
+  <section id="practice-view" class="practice-view" hidden aria-labelledby="practice-title">
+  <section class="practice-hero">
+    <div>
+      <p class="practice-eyebrow">小学六年级 · 自主练习</p>
+      <h1 id="practice-title" tabindex="-1">数学，一题一题学懂。</h1>
+      <p>短测定位薄弱点，专项练习巩固方法；答错的题会自动进入错题本。</p>
+    </div>
+    <div class="practice-hero-formula" aria-hidden="true">
+      <span>½</span><span>πr²</span><span>3∶4</span>
+    </div>
+  </section>
+
+  <nav class="practice-nav" aria-label="学生练习">
+    <button class="practice-nav-button" type="button" data-practice-action="home" aria-current="page">练习首页</button>
+    <button class="practice-nav-button" type="button" data-practice-action="review">
+      错题本 <span class="practice-badge" id="practice-badge"></span>
+    </button>
+  </nav>
+  <div id="practice-app" class="practice-app" tabindex="-1"></div>
 </section>
 
 </main>
@@ -2194,6 +2302,7 @@ createPaper();
     paper: byId("paper-view"),
     diagnosis: byId("diagnosis-view"),
     projection: byId("diagnosis-projection"),
+    practice: byId("practice-view"),
   };
   let selection = { grade: "9", topic: quadratic.id, variant: "flight" };
   let question = questionBank.flight.example();
@@ -2207,9 +2316,11 @@ createPaper();
 
   function openView(view, focusTarget) {
     for (const [name, panel] of Object.entries(views)) panel.hidden = name !== view;
-    for (const name of ["paper", "diagnosis"]) {
+    // 投屏讲评属于诊断流程；其余顶层页面与同名导航一一对应。
+    const activeNavigation = view === "projection" ? "diagnosis" : view;
+    for (const name of ["paper", "diagnosis", "practice"]) {
       const tab = byId("open-" + name);
-      if (name === (view === "paper" ? "paper" : "diagnosis")) tab.setAttribute("aria-current", "page");
+      if (name === activeNavigation) tab.setAttribute("aria-current", "page");
       else tab.removeAttribute("aria-current");
     }
     byId(focusTarget).focus();
@@ -2719,6 +2830,7 @@ createPaper();
 
   byId("open-paper").addEventListener("click", () => openView("paper", "title"));
   byId("open-diagnosis").addEventListener("click", () => openView("diagnosis", "diagnosis-title"));
+  byId("open-practice").addEventListener("click", () => openView("practice", "practice-title"));
   byId("diagnosis-return").addEventListener("click", () => openView("diagnosis", "diagnosis-review-title"));
   function selectChapter(gradeValue, topicValue) {
     const next = { grade: gradeValue, topic: topicValue, variant: topicValue === quadratic.id ? "flight" : "bank" };
@@ -2836,6 +2948,301 @@ createPaper();
   }
   showSelection();
   renderQuestion();
+})();
+
+(() => {
+  "use strict";
+
+  const topics = [
+    ["fraction", "分数运算", "约分、通分、乘除", "½"],
+    ["percent", "百分数", "折扣、增长率、单位“1”", "%"],
+    ["ratio", "比与比例", "化简比、按比分配、比例尺", "∶"],
+    ["circle", "圆", "半径、周长、面积", "◯"],
+    ["solid", "立体图形", "长方体、圆柱和圆锥", "◇"],
+    ["stats", "统计与数据", "平均数、读图、百分比", "▥"],
+  ];
+  const bank = [
+    ["f1", "fraction", "3/4 + 1/6 等于多少？", ["5/6", "11/12", "4/10", "2/3"], 1, "先把两个分数化成分母相同的分数。", ["4 和 6 的最小公倍数是 12。", "3/4 = 9/12，1/6 = 2/12。", "9/12 + 2/12 = 11/12。"], "分母表示每份的大小，分母不同不能直接相加。"],
+    ["f2", "fraction", "2/3 ÷ 4/5 等于多少？", ["8/15", "6/5", "5/6", "3/2"], 2, "除以一个非零分数，等于乘它的倒数。", ["4/5 的倒数是 5/4。", "2/3 × 5/4 = 10/12 = 5/6。"], "倒数只用于这里的除数 4/5。"],
+    ["f3", "fraction", "5/8 − 1/4 等于多少？", ["1/2", "1/4", "4/4", "3/8"], 3, "把 1/4 改写成分母为 8 的分数。", ["1/4 = 2/8。", "5/8 − 2/8 = 3/8。"], "通分后，分母保持不变。"],
+    ["f4", "fraction", "一根彩带长 15 米，用去了它的 2/5。用去了多少米？", ["6 米", "9 米", "10 米", "3 米"], 0, "求一个数的几分之几，用乘法。", ["把 15 米平均分成 5 份，每份 3 米。", "取其中的 2 份：3 × 2 = 6（米）。"], "题目问用去的长度，9 米是剩下的。"],
+    ["f5", "fraction", "9/14 × 7/12 等于多少？", ["3/4", "3/8", "7/8", "5/12"], 1, "乘法可以先交叉约分。", ["7 和 14 同除以 7，得到 1 和 2。", "9 和 12 同除以 3，得到 3 和 4。", "(3 × 1) ÷ (2 × 4) = 3/8。"], "约分时要同时除分子和分母。"],
+    ["f6", "fraction", "4/5 − (1/2 + 1/10) 等于多少？", ["2/5", "3/10", "1/5", "7/10"], 2, "先算小括号里。", ["1/2 + 1/10 = 5/10 + 1/10 = 6/10。", "4/5 = 8/10，8/10 − 6/10 = 2/10 = 1/5。"], "括号里是一个整体，先把它算完。"],
+    ["p1", "percent", "一本书原价 80 元，打八五折后是多少钱？", ["12 元", "68 元", "65 元", "92 元"], 1, "八五折表示实际付原价的 85%。", ["把原价 80 元看作单位“1”。", "80 × 85% = 68（元）。"], "12 元是优惠的金额，不是实付款。"],
+    ["p2", "percent", "一棵树去年高 2 米，今年高 2.5 米。今年比去年高了百分之几？", ["20%", "125%", "50%", "25%"], 3, "“比去年”说明用去年的高度作比较基准。", ["增加了 2.5 − 2 = 0.5（米）。", "0.5 ÷ 2 = 0.25 = 25%。"], "增长率用增加量除以原来的量。"],
+    ["p3", "percent", "一袋米用掉 30% 后还剩 14 千克。这袋米原有多少千克？", ["20 千克", "18.2 千克", "9.8 千克", "24 千克"], 0, "14 千克对应剩下的百分率。", ["剩下的比例是 1 − 30% = 70%。", "原来的质量是 14 ÷ 70% = 20（千克）。"], "先找出已知数量对应的是哪个百分率。"],
+    ["p4", "percent", "把 0.375 化成百分数，结果是？", ["3.75%", "375%", "37.5%", "0.375%"], 2, "百分数表示“每一百份中有多少份”。", ["0.375 = 37.5/100。", "37.5/100 写成 37.5%。"], "小数化百分数时，小数点向右移两位，再添上百分号。"],
+    ["p5", "percent", "某物品原价 100 元，先涨价 20%，再按涨价后的价格降价 20%。现价是多少？", ["100 元", "96 元", "104 元", "80 元"], 1, "第二次的 20% 是以涨价后的价格为基准。", ["涨价后是 100 × 120% = 120（元）。", "再降价后是 120 × 80% = 96（元）。"], "两个 20% 对应的单位“1”不同，不能抵消。"],
+    ["p6", "percent", "小组共种 50 棵树，成活 46 棵。成活率是多少？", ["8%", "46%", "96%", "92%"], 3, "成活率 = 成活棵数 ÷ 总棵数。", ["46 ÷ 50 = 0.92。", "0.92 = 92%。"], "分母是种下的总棵数。"],
+    ["r1", "ratio", "把 1.2 米与 80 厘米的比化成最简整数比。", ["3∶2", "2∶3", "3∶200", "1∶8"], 0, "先统一长度单位。", ["1.2 米 = 120 厘米。", "120∶80 的前后项同时除以 40，得到 3∶2。"], "比较同类量前，先统一单位。"],
+    ["r2", "ratio", "将 36 本书按 2∶4 分给甲、乙两个小组，乙组分到几本？", ["18 本", "12 本", "24 本", "9 本"], 2, "先求总份数，再求乙占的份数。", ["一共 2 + 4 = 6 份。", "每份 36 ÷ 6 = 6 本，乙组有 4 份，即 24 本。"], "2∶4 中的 4 是乙的份数，不是总份数。"],
+    ["r3", "ratio", "地图比例尺是 1∶50 000，两地在图上相距 4 厘米，实际相距多少？", ["200 米", "20 千米", "0.2 千米", "2 千米"], 3, "图上 1 厘米对应实际 50 000 厘米。", ["实际距离为 4 × 50 000 = 200 000 厘米。", "200 000 厘米 = 2 000 米 = 2 千米。"], "长度换算每一步都要带单位。"],
+    ["r4", "ratio", "在比例 x∶6 = 4∶3 中，x 等于多少？", ["4.5", "8", "2", "24"], 1, "比例的两个外项积等于两个内项积。", ["3x = 6 × 4 = 24。", "x = 24 ÷ 3 = 8。"], "先认清内项和外项的位置。"],
+    ["r5", "ratio", "一个班男生与女生人数的比是 5∶4，女生有 16 人。全班多少人？", ["36 人", "20 人", "25 人", "40 人"], 0, "16 人对应的是 4 份。", ["每份有 16 ÷ 4 = 4（人）。", "全班共 5 + 4 = 9 份，有 4 × 9 = 36（人）。"], "不要把某一组的人数当成全班总数。"],
+    ["r6", "ratio", "同样的水龙头匀速放水，5 分钟放 20 升，8 分钟放多少升？", ["25 升", "40 升", "32 升", "28 升"], 2, "匀速放水时，每分钟放出的水量相同。", ["每分钟放 20 ÷ 5 = 4（升）。", "8 分钟放 4 × 8 = 32（升）。"], "先求单位时间的量。"],
+    ["c1", "circle", "一个圆的直径是 10 厘米，周长是多少？取 π = 3.14。", ["15.7 厘米", "78.5 厘米", "62.8 厘米", "31.4 厘米"], 3, "圆的周长是 π × 直径。", ["题目已给直径 d = 10 厘米。", "周长 C = 3.14 × 10 = 31.4 厘米。"], "直径已经是半径的两倍，不能再乘 2。"],
+    ["c2", "circle", "一个圆的半径是 4 厘米，面积是多少？取 π = 3.14。", ["50.24 平方厘米", "25.12 平方厘米", "12.56 平方厘米", "100.48 平方厘米"], 0, "圆面积是 π × 半径 × 半径。", ["半径的平方是 4 × 4 = 16。", "面积 S = 3.14 × 16 = 50.24 平方厘米。"], "面积使用平方单位。"],
+    ["c3", "circle", "直径是 6 米的圆形花坛，面积是多少？取 π = 3.14。", ["18.84 平方米", "113.04 平方米", "28.26 平方米", "9.42 平方米"], 2, "面积公式需要的是半径。", ["半径是 6 ÷ 2 = 3 米。", "S = 3.14 × 3 × 3 = 28.26 平方米。"], "代公式之前先把直径换成半径。"],
+    ["c4", "circle", "一个圆的半径扩大到原来的 3 倍，它的面积扩大到原来的几倍？", ["3 倍", "9 倍", "6 倍", "12 倍"], 1, "圆面积公式里有两个半径相乘。", ["半径从 r 变为 3r。", "面积从 πr² 变为 π × (3r)² = 9πr²。"], "半径乘 3，周长乘 3，面积乘 9。"],
+    ["c5", "circle", "一个圆环外半径 5 厘米、内半径 3 厘米，面积是多少？取 π = 3.14。", ["12.56 平方厘米", "106.76 平方厘米", "28.26 平方厘米", "50.24 平方厘米"], 3, "圆环面积 = 外圆面积 − 内圆面积。", ["两个圆的半径平方分别是 25 和 9。", "圆环面积 = 3.14 × (25 − 9) = 50.24 平方厘米。"], "不能把半径之差直接代入圆面积公式。"],
+    ["c6", "circle", "一个车轮周长 1.6 米，无滑动地滚动 25 圈，前进多少米？", ["40 米", "32 米", "26.6 米", "16 米"], 0, "滚动一圈前进一个周长。", ["一圈前进 1.6 米。", "25 圈前进 1.6 × 25 = 40（米）。"], "周长是长度，圈数只是倍数。"],
+    ["s1", "solid", "一个长方体长 8 厘米、宽 5 厘米、高 3 厘米，体积是多少？", ["79 立方厘米", "120 立方厘米", "158 立方厘米", "40 立方厘米"], 1, "长方体体积 = 长 × 宽 × 高。", ["底面积为 8 × 5 = 40 平方厘米。", "再乘高：40 × 3 = 120 立方厘米。"], "体积不是六个面的面积之和。"],
+    ["s2", "solid", "圆柱与圆锥的底面积相等，高也相等。若圆柱体积为 90 立方厘米，圆锥体积是多少？", ["270 立方厘米", "45 立方厘米", "30 立方厘米", "90 立方厘米"], 2, "同底等高的圆锥体积是圆柱的几分之几？", ["圆柱 V = 底面积 × 高。", "圆锥 V = 底面积 × 高 ÷ 3，所以 90 ÷ 3 = 30 立方厘米。"], "这个 1/3 的比较依赖同底面积且等高。"],
+    ["s3", "solid", "圆柱底面半径 2 厘米、高 5 厘米，体积是多少？取 π = 3.14。", ["31.4 立方厘米", "62.8 立方厘米", "20.94 立方厘米", "12.56 立方厘米"], 1, "先求底面圆的面积，再乘高。", ["底面积为 3.14 × 2 × 2 = 12.56 平方厘米。", "V = 12.56 × 5 = 62.8 立方厘米。"], "圆柱体积不用除以 3。"],
+    ["s4", "solid", "1.5 升水等于多少毫升？", ["150 毫升", "15 毫升", "15 000 毫升", "1 500 毫升"], 3, "1 升 = 1 000 毫升。", ["1.5 × 1 000 = 1 500。", "因此 1.5 升 = 1 500 毫升。"], "从升换算成毫升要乘 1 000。"],
+    ["s5", "solid", "边长 4 厘米的正方体，表面积是多少？", ["96 平方厘米", "64 平方厘米", "16 平方厘米", "48 平方厘米"], 0, "正方体有 6 个相同的正方形面。", ["每个面面积是 4 × 4 = 16 平方厘米。", "表面积是 16 × 6 = 96 平方厘米。"], "4 × 4 × 4 得到的是体积。"],
+    ["s6", "solid", "圆柱的底面周长是 12 厘米，高是 5 厘米，侧面积是多少？", ["30 平方厘米", "17 平方厘米", "60 平方厘米", "120 平方厘米"], 2, "沿高剪开圆柱侧面，展开图是长方形。", ["长方形一边是底面周长 12 厘米，另一边是高 5 厘米。", "侧面积 = 12 × 5 = 60 平方厘米。"], "侧面积不包含两个底面。"],
+    ["d1", "stats", "四天读书页数分别是 12、8、10、14。平均每天读多少页？", ["10 页", "11 页", "12 页", "44 页"], 1, "平均数等于总数除以份数。", ["四天合计 12 + 8 + 10 + 14 = 44 页。", "44 ÷ 4 = 11 页。"], "先加总，再除以天数。"],
+    ["d2", "stats", "扇形统计图中，阅读占 25%。如果统计了 40 人，选择阅读的有多少人？", ["25 人", "30 人", "16 人", "10 人"], 3, "25% 也可以写成 1/4。", ["40 人是统计的总人数。", "40 × 25% = 40 ÷ 4 = 10（人）。"], "图中的百分数需要乘总人数。"],
+    ["d3", "stats", "要展示一周每天最高气温的变化趋势，最合适的是哪种统计图？", ["折线统计图", "扇形统计图", "单独标出最高温", "只写周平均气温"], 0, "要看气温怎样随时间升降。", ["折线把相邻日期的数据连起来。", "线段的上升或下降可以直观表示变化。"], "扇形图主要显示各部分占总体的比例。"],
+    ["d4", "stats", "三场比赛得分分别为 6、9 和 12 分。第四场得多少分，才能让四场平均 10 分？", ["10 分", "12 分", "13 分", "15 分"], 2, "先反推四场比赛应有的总分。", ["总分应为 10 × 4 = 40 分。", "前三场共 6 + 9 + 12 = 27 分，第四场应得 40 − 27 = 13 分。"], "平均 10 分不要求每场都得 10 分。"],
+    ["d5", "stats", "投篮 12 次进了 9 球。要比较不同同学的命中表现，适合用什么指标？", ["投篮次数", "进球次数加投篮次数", "未进球的次数", "进球次数 ÷ 投篮次数"], 3, "不同同学的投篮总次数可能不一样。", ["命中率把进球数与尝试次数一起考虑。", "这位同学的命中率为 9 ÷ 12 = 75%。"], "比较比例可以消除总次数不同造成的影响。"],
+    ["d6", "stats", "扇形统计图中，跳绳占 40%，跑步占 35%，其余同学都选球类。球类占多少？", ["15%", "25%", "35%", "75%"], 1, "完整的圆表示 100%。", ["跳绳和跑步合计 40% + 35% = 75%。", "剩余部分是 100% − 75% = 25%。"], "题目问其余部分，要用总体减去已知部分。"],
+  ].map(([id, topic, prompt, choices, answer, hint, steps, tip]) => ({ id, topic, prompt, choices, answer, hint, steps, tip }));
+
+  const topicMap = new Map(topics.map(topic => [topic[0], topic]));
+  const questionMap = new Map(bank.map(question => [question.id, question]));
+  const storageKey = "grade6-math-studio-v1";
+  const view = document.getElementById("practice-view");
+  const app = document.getElementById("practice-app");
+  const badge = document.getElementById("practice-badge");
+  let storageWorks = true;
+  let record = loadRecord();
+  let page = "home";
+  let run = null;
+
+  function loadRecord() {
+    const base = { attempts: 0, firstCorrect: 0, wrong: {}, last: null };
+    try {
+      const data = JSON.parse(localStorage.getItem(storageKey) || "null");
+      if (!data || typeof data !== "object") return base;
+      // 接口式本地数据允许缺字段；只恢复题库仍能识别且类型有效的历史记录。
+      const validCount = value => Number.isInteger(value) && value >= 0;
+      if (validCount(data.attempts)) base.attempts = data.attempts;
+      if (validCount(data.firstCorrect)) base.firstCorrect = Math.min(data.firstCorrect, base.attempts);
+      for (const [id, item] of Object.entries(data.wrong ?? {})) {
+        const question = questionMap.get(id);
+        if (question && item && Number.isInteger(item.pick) && item.pick >= 0 && item.pick < question.choices.length &&
+            item.pick !== question.answer && validCount(item.times) && item.times > 0) {
+          base.wrong[id] = { pick: item.pick, times: item.times };
+        }
+      }
+      if (data.last && Array.isArray(data.last.rows) && data.last.rows.length === topics.length &&
+          data.last.rows.every((row, index) => row?.topic === topics[index][0] && validCount(row.clean) && row.total === 2 && row.clean <= 2)) {
+        base.last = { rows: data.last.rows };
+      }
+    } catch (error) {
+      if (error.name !== "SyntaxError") storageWorks = false;
+    }
+    return base;
+  }
+
+  function saveRecord() {
+    // 浏览器禁用存储时仍保留内存状态，确保学生能完成本次练习并看到结果。
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(record));
+    } catch {
+      storageWorks = false;
+    }
+  }
+
+  function home() {
+    const wrongCount = Object.keys(record.wrong).length;
+    return `
+      <section aria-labelledby="practice-topics-title">
+        <div class="practice-section-head"><h2 id="practice-topics-title">选一个专项练习</h2><p>每组 4 道题，集中练一个知识点。</p></div>
+        <div class="practice-topic-grid">${topics.map(([id, name, description, symbol]) => `
+          <button class="practice-topic" type="button" data-practice-action="practice" data-id="${id}">
+            <span class="practice-topic-symbol" aria-hidden="true">${symbol}</span>
+            <span><strong>${name}</strong><small>${description}</small></span>
+            <span class="practice-topic-arrow" aria-hidden="true">→</span>
+          </button>`).join("")}</div>
+      </section>
+      <div class="practice-dashboard">
+        <section class="practice-card">
+          <div class="practice-kicker">学习记录</div><h2>我的练习进度</h2>
+          <div class="practice-stats">
+            <div><strong>${record.attempts}</strong><span>已作答（题次）</span></div>
+            <div><strong>${record.firstCorrect}</strong><span>累计答对（题次）</span></div>
+            <div><strong>${wrongCount}</strong><span>待复习错题</span></div>
+          </div>
+          <div class="practice-actions">${record.last ? '<button class="practice-button practice-button-secondary" type="button" data-practice-action="last">查看上次短测</button>' : '<p class="practice-muted">完成短测后，这里可以回看各知识点的表现。</p>'}</div>
+        </section>
+        <section class="practice-card">
+          <div class="practice-kicker">快速开始</div><h2>先做一次 12 题短测</h2>
+          <p class="practice-muted">六类知识点各两题，根据独立作答结果找到需要巩固的内容。</p>
+          <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="diagnose">开始短测 →</button><button class="practice-button practice-button-secondary" type="button" data-practice-action="review">打开错题本</button></div>
+        </section>
+      </div>`;
+  }
+
+  function review() {
+    const ids = Object.keys(record.wrong);
+    return `<div class="practice-work">
+      <button class="practice-quiet" type="button" data-practice-action="home">← 返回练习首页</button>
+      <section class="practice-card">
+        <div class="practice-kicker">错题复习</div><h1>我的错题本</h1>
+        <p class="practice-muted">复习时不看提示并答对，题目才会从待复习列表移除。</p>
+        ${ids.length ? `
+          <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="retry">开始复习 · ${ids.length} 题</button></div>
+          <div class="practice-review-list" role="list">${ids.map(id => {
+            const question = questionMap.get(id);
+            const item = record.wrong[id];
+            return `<div class="practice-row" role="listitem"><div><span class="practice-tag">${topicMap.get(question.topic)[1]} · 错过 ${item.times} 次</span><p>${question.prompt}</p></div><button class="practice-button practice-button-secondary" type="button" data-practice-action="retry-one" data-id="${id}">重做</button></div>`;
+          }).join("")}</div>` : `
+          <div class="practice-empty">这里还没有待复习的题。做短测或专项时，答错的题会自动出现。</div>
+          <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="diagnose">去做短测 →</button></div>`}
+      </section>
+    </div>`;
+  }
+
+  function start(kind, id) {
+    let questions;
+    let label;
+    if (kind === "diagnose") {
+      questions = topics.flatMap(topic => bank.filter(question => question.topic === topic[0]).slice(0, 2));
+      label = "12 题短测";
+    } else if (kind === "practice") {
+      if (!topicMap.has(id)) return;
+      questions = bank.filter(question => question.topic === id).slice(2);
+      label = topicMap.get(id)[1] + " · 专项练习";
+    } else {
+      const ids = id ? [id] : Object.keys(record.wrong);
+      questions = ids.map(questionId => questionMap.get(questionId)).filter(Boolean);
+      label = "错题复习";
+    }
+    if (!questions.length) return;
+    // 每次开始新练习都重建瞬时状态，历史统计只在提交答案时写入。
+    run = { kind, label, questions, index: 0, results: [], pick: null, hinted: false, submitted: false };
+    render("quiz", true);
+  }
+
+  function quiz() {
+    const question = run.questions[run.index];
+    const solved = run.submitted && question.answer === run.pick;
+    return `<div class="practice-work">
+      <button class="practice-quiet" type="button" data-practice-action="${run.kind === "retry" ? "review" : "home"}">← 退出本组</button>
+      <div class="practice-progress-head"><span>${run.label}</span><span>第 ${run.index + 1} / ${run.questions.length} 题</span></div>
+      <div class="practice-progress-track" role="progressbar" aria-label="本组已完成题数" aria-valuemin="0" aria-valuemax="${run.questions.length}" aria-valuenow="${run.results.length}"><span style="width:${100 * run.results.length / run.questions.length}%"></span></div>
+      <section class="practice-card practice-question">
+        <div class="practice-kicker">${topicMap.get(question.topic)[1]}</div><h2 id="practice-prompt" tabindex="-1">${question.prompt}</h2>
+        <div class="practice-options" role="group" aria-labelledby="practice-prompt">${question.choices.map((choice, index) => {
+          const stateClass = run.submitted ? (index === question.answer ? " is-correct" : index === run.pick ? " is-wrong" : "") : "";
+          const correctLabel = run.submitted && index === question.answer ? '<span class="practice-sr">正确选项</span>' : "";
+          return `<button class="practice-choice${stateClass}" type="button" data-practice-action="pick" data-id="${index}" aria-pressed="${run.pick === index}" ${run.submitted ? "disabled" : ""}><b aria-hidden="true">${"ABCD"[index]}</b><span>${choice}</span>${correctLabel}</button>`;
+        }).join("")}</div>
+        ${run.hinted && !run.submitted ? `<div class="practice-hint" id="practice-hint" tabindex="-1"><strong>想一想：</strong>${question.hint}</div>` : ""}
+        ${run.submitted ? `
+          <div class="practice-feedback ${solved ? "is-correct" : "is-wrong"}" id="practice-feedback" tabindex="-1">
+            <strong>${solved ? (run.hinted ? "借助提示做对了！" : "答对了！") : "这题先记下来。正确答案：" + question.choices[question.answer]}</strong>
+            <ol>${question.steps.map(step => `<li>${step}</li>`).join("")}</ol><p><strong>记住：</strong>${question.tip}</p>
+            ${run.kind === "retry" && solved ? `<p>${run.hinted ? "本题继续留在错题本，下次试试独立完成。" : "已从待复习错题中移除。"}</p>` : ""}
+          </div>
+          <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="next">${run.index + 1 === run.questions.length ? "查看本组结果" : "下一题 →"}</button></div>` : `
+          <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="submit" ${run.pick === null ? "disabled" : ""}>提交答案</button><button class="practice-button practice-button-secondary" type="button" data-practice-action="hint" ${run.hinted ? "disabled" : ""}>看个提示</button></div>`}
+      </section>
+    </div>`;
+  }
+
+  function submit() {
+    if (!run || run.submitted || run.pick === null) return;
+    const question = run.questions[run.index];
+    const correct = run.pick === question.answer;
+    run.results.push({ topic: question.topic, clean: correct && !run.hinted, correct });
+    run.submitted = true;
+    record.attempts++;
+    if (correct) record.firstCorrect++;
+    if (!correct) {
+      record.wrong[question.id] = { pick: run.pick, times: (record.wrong[question.id]?.times ?? 0) + 1 };
+    } else if (run.kind === "retry" && !run.hinted) {
+      // 只有错题复习中独立答对才移除，避免“看提示答对”掩盖尚未掌握的题目。
+      delete record.wrong[question.id];
+    }
+    saveRecord();
+    render("quiz");
+    document.getElementById("practice-feedback")?.focus();
+  }
+
+  function next() {
+    if (!run?.submitted) return;
+    if (run.index + 1 < run.questions.length) {
+      run.index++;
+      run.pick = null;
+      run.hinted = false;
+      run.submitted = false;
+      render("quiz", true);
+      return;
+    }
+    if (run.kind === "diagnose") {
+      record.last = { rows: topics.map(topic => {
+        const results = run.results.filter(result => result.topic === topic[0]);
+        return { topic: topic[0], clean: results.filter(result => result.clean).length, total: results.length };
+      }) };
+      saveRecord();
+    }
+    render(run.kind === "diagnose" ? "last" : "result", true);
+  }
+
+  function last() {
+    if (!record.last) return home();
+    const rows = record.last.rows;
+    const clean = rows.reduce((sum, row) => sum + row.clean, 0);
+    return `<div class="practice-work"><button class="practice-quiet" type="button" data-practice-action="home">← 返回练习首页</button><section class="practice-card">
+      <div class="practice-kicker">短测回顾</div><h1>先从没把握的地方开始练</h1><div class="practice-result-score">${clean} / 12</div>
+      <p class="practice-muted">这里统计未看提示时答对的题。每类两题，结果用于挑选下一组练习。</p>
+      <div class="practice-report-list" role="list">${[...rows].sort((a, b) => a.clean - b.clean).map(row => `<div class="practice-row" role="listitem"><div><strong>${topicMap.get(row.topic)[1]}</strong><p>${row.clean} / ${row.total} 题独立答对 · ${row.clean === 2 ? "本次两题都答对" : row.clean === 1 ? "建议再巩固" : "建议优先练"}</p></div><button class="practice-button practice-button-secondary" type="button" data-practice-action="practice" data-id="${row.topic}">练这个专项</button></div>`).join("")}</div>
+      <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="review">去错题本 →</button><button class="practice-button practice-button-secondary" type="button" data-practice-action="diagnose">再做一次短测</button></div>
+    </section></div>`;
+  }
+
+  function result() {
+    const correct = run.results.filter(result => result.correct).length;
+    const clean = run.results.filter(result => result.clean).length;
+    return `<div class="practice-work"><button class="practice-quiet" type="button" data-practice-action="home">← 返回练习首页</button><section class="practice-card">
+      <div class="practice-kicker">${run.label}</div><h1>这组练习完成了</h1><div class="practice-result-score">${correct} / ${run.questions.length}</div>
+      <p class="practice-muted">答对 ${correct} 题，其中独立答对 ${clean} 题。没做对的题可以到错题本继续练。</p>
+      <div class="practice-actions"><button class="practice-button" type="button" data-practice-action="review">查看错题本</button><button class="practice-button practice-button-secondary" type="button" data-practice-action="home">选其他专项</button></div>
+    </section></div>`;
+  }
+
+  function render(nextPage, focus = false) {
+    page = nextPage;
+    const pages = { home, quiz, review, last, result };
+    app.innerHTML = (storageWorks ? "" : '<div class="practice-warning" role="status">当前浏览器无法长期保存记录，关闭页面后本次练习记录可能丢失。</div>') + pages[page]();
+    const wrongCount = Object.keys(record.wrong).length;
+    badge.textContent = wrongCount ? String(wrongCount) : "";
+    for (const button of view.querySelectorAll(".practice-nav-button")) {
+      const current = page === "review" && button.dataset.practiceAction === "review" || page !== "review" && button.dataset.practiceAction === "home";
+      if (current) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
+    if (focus) {
+      view.scrollIntoView({ block: "start" });
+      (app.querySelector("#practice-prompt") || app).focus({ preventScroll: true });
+    }
+  }
+
+  view.addEventListener("click", event => {
+    const control = event.target.closest("[data-practice-action]");
+    if (!control || control.disabled || !view.contains(control)) return;
+    event.preventDefault();
+    const { practiceAction: action, id } = control.dataset;
+    if (action === "home" || action === "review" || action === "last") render(action, true);
+    else if (action === "diagnose" || action === "practice") start(action, id);
+    else if (action === "retry" || action === "retry-one") start("retry", id);
+    else if (action === "pick" && page === "quiz" && !run.submitted) {
+      run.pick = Number(id);
+      render("quiz");
+      app.querySelector('[aria-pressed="true"]')?.focus();
+    } else if (action === "hint" && page === "quiz" && !run.submitted) {
+      run.hinted = true;
+      render("quiz");
+      document.getElementById("practice-hint")?.focus();
+    } else if (action === "submit" && page === "quiz") submit();
+    else if (action === "next" && page === "quiz") next();
+  });
+
+  render("home");
 })();
 
 </script>
